@@ -878,13 +878,17 @@ function drawHover(){
 window.addEventListener('beforeunload',()=>{if(isEndless&&gameRunning)saveEndless();});
 
 let lastTime=performance.now();
-function gameLoop(now){
-  const dt=now-lastTime;lastTime=now;
-  if(gameRunning&&lives>0){update(dt,now);draw();drawHover();}
-  requestAnimationFrame(gameLoop);
+function gameLoop(){
+  const now=performance.now();
+  const dt=Math.min(now-lastTime,200); // cap dt to avoid huge jumps
+  lastTime=now;
+  if(gameRunning&&lives>0){
+    update(dt,now);
+    if(!document.hidden){draw();drawHover();}
+  }
 }
 checkSaveOnMenu();
-requestAnimationFrame(gameLoop);
+setInterval(gameLoop,1000/60); // 60fps, runs even when tab is hidden
 </script>
 </body>
 </html>
