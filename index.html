@@ -685,7 +685,7 @@ function startWave(){
   if(isEndless){
     count=Math.min(10,3+waveNum);
     baseHp=20+waveNum*35+Math.pow(waveNum,2.4)*4;
-    if(waveNum>=100) baseHp*=1+(waveNum-100)*0.05;
+    if(waveNum>=100) baseHp*=1+(waveNum-100)*0.10;
     baseSpeed=1.0+Math.min(waveNum*0.07,1.8);
   } else {
     count=Math.min(10,5+waveNum*2);
