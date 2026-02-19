@@ -392,7 +392,7 @@ function loadEndless(){
   bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum; gsoulDroppedWaves=new Set(d.gsoulDroppedWaves||[]);
   selectedTower=0; selectedPlacedTower=null; selectedUpgPath=0;
   enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
-  towers=d.towers.map(t=>({...t,lastShot:0,angle:0,lastTick:performance.now()}));
+  towers=d.towers.map(t=>({...t,lastShot:gameTime,angle:0,lastTick:gameTime}));
   document.getElementById('game-over').style.display='none';
   document.getElementById('gsouls-panel').style.display='block';
   document.getElementById('interest-panel').style.display='none';
@@ -743,7 +743,7 @@ canvas.addEventListener('click',e=>{
   if(towers.length>=towerCap())return;
   const d=TDEFS[selectedTower]; if(gold<d.cost)return;
   gold-=d.cost; grid[row][col]=2;
-  towers.push({x:col*TILE+TILE/2,y:row*TILE+TILE/2,type:selectedTower,upgrades:selectedTower===5?[1,1]:[1,1,1,1],totalSpent:d.cost,lastShot:0,angle:0,targeting:'first',lastTick:performance.now()});
+  towers.push({x:col*TILE+TILE/2,y:row*TILE+TILE/2,type:selectedTower,upgrades:selectedTower===5?[1,1]:[1,1,1,1],totalSpent:d.cost,lastShot:gameTime,angle:0,targeting:'first',lastTick:gameTime});
   updateUI(); if(isEndless)saveEndless();
 });
 
@@ -794,8 +794,7 @@ function startWave(){
   document.getElementById('start-btn').disabled=true;
   document.getElementById('start-btn').textContent=`Wave ${waveNum}...`;
   document.getElementById('boss-warn').textContent='';
-  const now=performance.now();
-  if(!isEndless) towers.forEach(t=>{if(t.type===5)t.lastTick=now;});
+  if(!isEndless) towers.forEach(t=>{if(t.type===5)t.lastTick=gameTime;});
   // Show wave 50 splash in endless
   if(isEndless&&waveNum===50&&!shown50Splash){shown50Splash=true;document.getElementById('wave50-splash').style.display='flex';}
 
@@ -1005,7 +1004,7 @@ function drawHover(){
 // Auto-save on tab close for endless
 window.addEventListener('beforeunload',()=>{if(isEndless&&gameRunning)saveEndless();});
 
-let lastTime=performance.now(),gameSpeed=1;
+let lastTime=performance.now(),gameSpeed=1,gameTime=0;
 function toggleSpeed(){
   gameSpeed=gameSpeed===1?2:1;
   const b=document.getElementById('speed-btn');
@@ -1017,7 +1016,8 @@ function gameLoop(){
   const dt=Math.min(now-lastTime,200)*gameSpeed;
   lastTime=now;
   if(gameRunning&&lives>0){
-    update(dt,now);
+    gameTime+=dt;
+    update(dt,gameTime);
     if(!document.hidden){draw();drawHover();}
   }
 }
