@@ -149,6 +149,8 @@
     <p>Each level of the <span class="val">Damage</span> upgrade increases tower damage by <span class="val">+35%</span> of base damage per level.</p>
     <p>Starting at level <span class="val">100</span>, every <span class="val">25</span> levels gives an additional <span class="val">+5%</span> bonus on top of total damage.</p>
     <p>Example: Level 150 = 2 bonus tiers = +10% extra damage.</p>
+    <p>Every <span class="val">1000</span> levels gives an additional <span class="val">x1.25</span> damage multiplier (stacks multiplicatively).</p>
+    <p>Example: Level 3000 = 3 milestones = x1.95 total multiplier.</p>
 
     <h3>Gold Mine</h3>
     <p>Base gold per tick: <span class="val">3</span>. Each Gold Amt level adds <span class="val">+20%</span> of base.</p>
@@ -516,7 +518,8 @@ function getTowerStats(t){
   const dlvl=t.upgrades[0];
   const baseDmg=b.damage*(1+(dlvl-1)*0.35)*(isEndless?gsoulDmgMul():1);
   const bonusLevels=dlvl>=100?Math.floor((dlvl-100)/25):0;
-  const dmg=Math.round(baseDmg*(1+bonusLevels*0.05));
+  const milestones=Math.floor(dlvl/1000);
+  const dmg=Math.round(baseDmg*(1+bonusLevels*0.05)*Math.pow(1.25,milestones));
   const rate=Math.max(50,Math.round(b.rate*Math.pow(0.87,t.upgrades[1]-1)));
   const range=Math.round(b.range+(t.upgrades[3]-1)*15);
   let splash=b.splash,slow=b.slow,chains=b.chains,targets=b.targets;
