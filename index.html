@@ -76,6 +76,19 @@
   #auto-start-btn { padding: 5px; border: none; color: #fff; font-size: 10px; font-weight: bold; border-radius: 3px; cursor: pointer; }
   #auto-start-btn.off { background: #37474f; } #auto-start-btn.on { background: #00897b; } #auto-start-btn:hover { filter: brightness(1.2); }
 
+  /* Info modal */
+  #info-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center; }
+  #info-modal.show { display:flex; }
+  #info-content { background:#0d1b2a; border:2px solid #0ff; border-radius:8px; padding:18px 22px; max-width:420px; width:90%; max-height:80vh; overflow-y:auto; color:#ccc; font-size:12px; line-height:1.6; }
+  #info-content h2 { color:#0ff; font-size:16px; margin:0 0 10px; }
+  #info-content h3 { color:#ffd54f; font-size:13px; margin:14px 0 4px; }
+  #info-content p { margin:2px 0; }
+  #info-content .val { color:#0ff; font-weight:bold; }
+  #info-content .close-info { margin-top:14px; padding:6px 16px; background:#0ff; color:#000; border:none; font-weight:bold; border-radius:4px; cursor:pointer; font-size:12px; }
+  #info-content .close-info:hover { background:#5ff; }
+  #info-btn { padding:5px; border:none; color:#fff; font-size:10px; font-weight:bold; border-radius:3px; cursor:pointer; background:#1565c0; margin-top:2px; }
+  #info-btn:hover { background:#1e88e5; }
+
   /* Gsouls panel (endless mode) */
   #gsouls-panel { display: none; background: #1a0a2e; border: 1px solid #7c4dff; border-radius: 5px; padding: 5px 7px; font-size: 10px; }
   #gsouls-panel .gs-title { color: #7c4dff; font-weight: bold; font-size: 11px; }
@@ -126,6 +139,40 @@
   <h1>NOW IT BEGINS!</h1>
   <p>Wave 50 - Gsouls now drop from bosses</p>
   <button onclick="dismissSplash()">Let's go!</button>
+</div>
+
+<div id="info-modal" onclick="if(event.target===this)closeInfo()">
+  <div id="info-content">
+    <h2>Game Info</h2>
+
+    <h3>Damage Upgrade Bonus</h3>
+    <p>Each level of the <span class="val">Damage</span> upgrade increases tower damage by <span class="val">+35%</span> of base damage per level.</p>
+    <p>Starting at level <span class="val">100</span>, every <span class="val">25</span> levels gives an additional <span class="val">+5%</span> bonus on top of total damage.</p>
+    <p>Example: Level 150 = 2 bonus tiers = +10% extra damage.</p>
+
+    <h3>Gold Mine</h3>
+    <p>Base gold per tick: <span class="val">3</span>. Each Gold Amt level adds <span class="val">+20%</span> of base.</p>
+    <p>Gold income scales with your highest wave this reset: <span class="val">+1% per wave</span> cleared.</p>
+    <p>Example: At wave 50, your Gold Mine earns 50% more gold.</p>
+    <p>Tick speed starts at <span class="val">5s</span> and decreases with Speed upgrades (min 0.2s).</p>
+
+    <h3>Gsouls (Endless Mode)</h3>
+    <p>Gsouls start dropping from bosses at <span class="val">wave 50</span>.</p>
+    <p>Each boss has a <span class="val">40%</span> chance to drop Gsouls.</p>
+    <p>Drop amount: <span class="val">1 + floor(wave / 25)</span> per drop.</p>
+    <p>Examples: Wave 50 = 1-2, Wave 75 = 1-3, Wave 100 = 1-4.</p>
+    <p>Each collected Gsoul gives <span class="val">+10% damage</span> to all towers.</p>
+    <p>Use <span class="val">Reset for Gsouls</span> to collect pending Gsouls. This resets your wave to 1, removes all towers and gold, but keeps your Gsouls and tower cap.</p>
+
+    <h3>Tower Cap</h3>
+    <p>You start with <span class="val">5</span> tower slots. Every <span class="val">50 waves</span> reached (across all resets) grants <span class="val">+1</span> slot permanently.</p>
+
+    <h3>Cluster Waves</h3>
+    <p>Every 5th wave (starting wave 3) spawns clusters of weaker enemies (<span class="val">-30% HP</span>).</p>
+    <p>Cluster size: Waves 1-20: <span class="val">3x</span>, 21-40: <span class="val">4x</span>, 41-60: <span class="val">5x</span>, 61+: <span class="val">7x</span>.</p>
+
+    <button class="close-info" onclick="closeInfo()">Got it!</button>
+  </div>
 </div>
 
 <div id="game-container">
@@ -190,11 +237,16 @@
     <button id="advance-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:11px;font-weight:bold;border-radius:4px;cursor:pointer;background:#7c4dff;" onclick="advanceWave()">Advance to Wave 2</button>
     <button id="auto-start-btn" class="off" onclick="toggleAutoStart()">Auto-start: OFF</button>
     <button id="hard-reset-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#c62828;margin-top:2px;" onclick="showHardReset()">Hard Reset</button>
+    <button id="info-btn" onclick="showInfo()">Game Info</button>
     <!-- Sound button hidden for now: <button id="sound-btn" style="padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;margin-top:2px;" onclick="toggleSound()">Sound: OFF</button> -->
   </div>
 </div>
 
 <script>
+// --- Info modal ---
+function showInfo(){document.getElementById('info-modal').classList.add('show');}
+function closeInfo(){document.getElementById('info-modal').classList.remove('show');}
+
 // --- Sound system (Web Audio API) ---
 let soundOn=false,audioCtx=null;
 function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
