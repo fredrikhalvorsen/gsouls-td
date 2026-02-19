@@ -1040,8 +1040,8 @@ function update(dt,now){
       btn.disabled=false;btn.textContent=`Start Wave ${waveNum+1}`;
     }
     if(isEndless) saveEndless();
-    if(autoStart&&lives>0) startWave();
     if(queuedAdvance&&endlessFarming){queuedAdvance=false;advanceWave();}
+    else if(autoStart&&lives>0) startWave();
   }
 }
 
