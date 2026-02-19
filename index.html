@@ -513,7 +513,7 @@ function towerCap(){return 5+Math.floor(highestWave/50);}
 
 // --- Gsouls ---
 let gsoulUpgrades={dmgBoost:0};
-function gsoulShopCost(lvl){return Math.round(10*Math.pow(1.5,lvl));}
+function gsoulShopCost(lvl){return Math.round(3*Math.pow(1.5,lvl));}
 function gsoulShopDmgMul(){return Math.pow(1.5,gsoulUpgrades.dmgBoost);}
 function gsoulDmgMul(){return (1+gsoulsCollected*0.10)*gsoulShopDmgMul();}
 function openGsoulShop(){
