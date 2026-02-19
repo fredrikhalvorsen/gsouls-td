@@ -1121,11 +1121,18 @@ function toggleSpeed(){
 }
 function gameLoop(){
   const now=performance.now();
-  const dt=Math.min(now-lastTime,200)*gameSpeed;
+  let elapsed=(now-lastTime)*gameSpeed;
   lastTime=now;
   if(gameRunning&&lives>0){
-    gameTime+=dt;
-    update(dt,gameTime);
+    const step=1000/60;
+    const maxSteps=60; // catch up to ~1 second per frame
+    let steps=Math.min(Math.ceil(elapsed/step),maxSteps);
+    const perStep=elapsed/steps;
+    for(let i=0;i<steps;i++){
+      if(!gameRunning||lives<=0)break;
+      gameTime+=perStep;
+      update(perStep,gameTime);
+    }
     if(!document.hidden){draw();drawHover();}
   }
 }
