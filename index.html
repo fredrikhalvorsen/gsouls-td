@@ -95,6 +95,23 @@
   #gsouls-panel .gs-row { display: flex; justify-content: space-between; color: #aaa; } #gsouls-panel .gs-row span { color: #e040fb; font-weight: bold; }
   #gsoul-claim-btn { margin-top: 3px; padding: 5px; width: 100%; background: #7c4dff; border: none; color: #fff; font-weight: bold; border-radius: 3px; cursor: pointer; font-size: 11px; }
   #gsoul-claim-btn:hover { background: #9c6fff; }
+  #gsoul-shop-btn { margin-top: 3px; padding: 5px; width: 100%; background: #e040fb; border: none; color: #fff; font-weight: bold; border-radius: 3px; cursor: pointer; font-size: 11px; }
+  #gsoul-shop-btn:hover { background: #f06fff; }
+  #gsoul-shop { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center; }
+  #gsoul-shop.show { display:flex; }
+  #gsoul-shop-content { background:#1a0a2e; border:2px solid #e040fb; border-radius:8px; padding:18px 22px; max-width:400px; width:90%; max-height:80vh; overflow-y:auto; color:#ccc; font-size:12px; line-height:1.6; }
+  #gsoul-shop-content h2 { color:#e040fb; font-size:16px; margin:0 0 10px; }
+  #gsoul-shop-content .gs-balance { color:#e040fb; font-weight:bold; font-size:13px; margin-bottom:10px; }
+  .shop-item { background:#0d1b2a; border:1px solid #333; border-radius:5px; padding:8px 10px; margin-bottom:8px; }
+  .shop-item .shop-name { color:#fff; font-weight:bold; font-size:12px; }
+  .shop-item .shop-desc { color:#aaa; font-size:10px; margin:2px 0; }
+  .shop-item .shop-info { color:#888; font-size:10px; }
+  .shop-item .shop-info span { color:#e040fb; font-weight:bold; }
+  .shop-buy { padding:4px 12px; background:#e040fb; border:none; color:#fff; font-weight:bold; border-radius:3px; cursor:pointer; font-size:11px; margin-top:4px; }
+  .shop-buy:hover { background:#f06fff; }
+  .shop-buy:disabled { background:#444; cursor:default; color:#888; }
+  .shop-close { margin-top:10px; padding:6px 16px; background:#7c4dff; color:#fff; border:none; font-weight:bold; border-radius:4px; cursor:pointer; font-size:12px; }
+  .shop-close:hover { background:#9c6fff; }
   #gsoul-claim-btn:disabled { background: #444; cursor: default; }
 </style>
 </head>
@@ -139,6 +156,15 @@
   <h1>NOW IT BEGINS!</h1>
   <p>Wave 50 - Gsouls now drop from bosses</p>
   <button onclick="dismissSplash()">Let's go!</button>
+</div>
+
+<div id="gsoul-shop" onclick="if(event.target===this)closeGsoulShop()">
+  <div id="gsoul-shop-content">
+    <h2>Gsoul Shop</h2>
+    <div class="gs-balance">Gsouls: <span id="shop-gs-balance">0</span></div>
+    <div id="shop-items"></div>
+    <button class="shop-close" onclick="closeGsoulShop()">Close</button>
+  </div>
 </div>
 
 <div id="info-modal" onclick="if(event.target===this)closeInfo()">
@@ -196,6 +222,7 @@
       <div class="gs-row">Pending: <span id="gs-pending">0</span></div>
       <div class="gs-row">Dmg bonus: <span id="gs-bonus">+0%</span></div>
       <button id="gsoul-claim-btn" onclick="claimGsouls()" disabled>Reset for Gsouls (0)</button>
+      <button id="gsoul-shop-btn" onclick="openGsoulShop()">Gsoul Shop</button>
     </div>
 
     <div id="interest-panel">
@@ -376,7 +403,7 @@ function saveEndless(){
     gold,waveNum,waveActive,gsoulsCollected,gsoulsPending,
     towers:towers.map(t=>({x:t.x,y:t.y,type:t.type,upgrades:[...t.upgrades],totalSpent:t.totalSpent,targeting:t.targeting})),
     grid:grid.map(r=>[...r]),shown50Splash,
-    endlessFarming,endlessTargetWave,highestWave,resetHighWave,gsoulDroppedWaves:[...gsoulDroppedWaves]
+    endlessFarming,endlessTargetWave,highestWave,resetHighWave,gsoulDroppedWaves:[...gsoulDroppedWaves],gsoulUpgrades
   };
   localStorage.setItem(SAVE_KEY,JSON.stringify(data));
 }
@@ -392,7 +419,7 @@ function loadEndless(){
   grid=d.grid; gold=d.gold; waveNum=d.waveActive?d.waveNum-1:d.waveNum; lives=1; waveActive=false; gameRunning=true;
   hasWon=false; shown50Splash=d.shown50Splash||false; autoStart=false;
   gsoulsCollected=d.gsoulsCollected||0; gsoulsPending=d.gsoulsPending||0;
-  bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum; gsoulDroppedWaves=new Set(d.gsoulDroppedWaves||[]);
+  bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum; gsoulDroppedWaves=new Set(d.gsoulDroppedWaves||[]); gsoulUpgrades=d.gsoulUpgrades||{dmgBoost:0};
   selectedTower=0; selectedPlacedTower=null; selectedUpgPath=0;
   enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   towers=d.towers.map(t=>({...t,lastShot:gameTime,angle:0,lastTick:gameTime}));
@@ -485,7 +512,38 @@ let highestWave=0,resetHighWave=0;
 function towerCap(){return 5+Math.floor(highestWave/50);}
 
 // --- Gsouls ---
-function gsoulDmgMul(){return 1+gsoulsCollected*0.10;}
+let gsoulUpgrades={dmgBoost:0};
+function gsoulShopCost(lvl){return Math.round(10*Math.pow(1.5,lvl));}
+function gsoulShopDmgMul(){return Math.pow(1.5,gsoulUpgrades.dmgBoost);}
+function gsoulDmgMul(){return (1+gsoulsCollected*0.10)*gsoulShopDmgMul();}
+function openGsoulShop(){
+  document.getElementById('gsoul-shop').classList.add('show');
+  renderShop();
+}
+function closeGsoulShop(){document.getElementById('gsoul-shop').classList.remove('show');}
+function renderShop(){
+  document.getElementById('shop-gs-balance').textContent=gsoulsCollected;
+  const c=document.getElementById('shop-items');
+  const lvl=gsoulUpgrades.dmgBoost;
+  const cost=gsoulShopCost(lvl);
+  const curMul=Math.round((Math.pow(1.5,lvl)-1)*100);
+  const nextMul=Math.round((Math.pow(1.5,lvl+1)-1)*100);
+  c.innerHTML=`<div class="shop-item">
+    <div class="shop-name">Damage Boost (Lv ${lvl})</div>
+    <div class="shop-desc">+50% damage per level, stacks multiplicatively with all other damage</div>
+    <div class="shop-info">Current: <span>+${curMul}%</span> | Next: <span>+${nextMul}%</span></div>
+    <div class="shop-info">Cost: <span>${cost} Gsouls</span></div>
+    <button class="shop-buy" onclick="buyGsoulUpgrade('dmgBoost')" ${gsoulsCollected<cost?'disabled':''}>Buy</button>
+  </div>`;
+}
+function buyGsoulUpgrade(key){
+  const cost=gsoulShopCost(gsoulUpgrades[key]);
+  if(gsoulsCollected<cost)return;
+  gsoulsCollected-=cost;
+  gsoulUpgrades[key]++;
+  renderShop(); updateUI();
+  if(isEndless) saveEndless();
+}
 function claimGsouls(){
   if(gsoulsPending<=0)return;
   gsoulsCollected+=gsoulsPending; gsoulsPending=0;
@@ -507,7 +565,7 @@ function cancelHardReset(){document.getElementById('hard-reset-confirm').style.d
 function doHardReset(){
   document.getElementById('hard-reset-confirm').style.display='none';
   deleteSave();
-  gsoulsCollected=0; gsoulsPending=0; highestWave=0; gsoulDroppedWaves=new Set();
+  gsoulsCollected=0; gsoulsPending=0; highestWave=0; gsoulDroppedWaves=new Set(); gsoulUpgrades={dmgBoost:0};
   initGame();
 }
 
@@ -765,7 +823,8 @@ function updateUI(){
   if(isEndless){
     document.getElementById('gs-collected').textContent=gsoulsCollected;
     document.getElementById('gs-pending').textContent=gsoulsPending;
-    document.getElementById('gs-bonus').textContent=`+${gsoulsCollected*10}%`;
+    const totalMul=Math.round((gsoulDmgMul()-1)*100);
+    document.getElementById('gs-bonus').textContent=`+${totalMul}%`;
     const cb=document.getElementById('gsoul-claim-btn');
     cb.textContent=`Reset for Gsouls (${gsoulsPending})`;
     cb.disabled=gsoulsPending<=0;
