@@ -239,7 +239,7 @@ const TDEFS = [
 const MINE_BASE_GOLD=3, MINE_BASE_RATE=5000;
 
 function upgCost(lvl,idx,ttype){
-  if(idx===0&&ttype===5) return Math.round(15+lvl*8); // Gold Mine "Gold Amt": linear but pricier
+  if(idx===0&&ttype===5) return Math.round((15+lvl*8)*Math.pow(1.01,lvl-1)); // Gold Mine "Gold Amt": linear base + mild exponential
   if(idx===0) return Math.round(8+lvl*3); // Damage: linear scaling
   return Math.round(15*Math.pow(1.55,lvl-1));
 }
