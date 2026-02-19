@@ -404,7 +404,7 @@ let towers,enemies,projectiles,particles,lightningBolts,goldTexts;
 let autoStart=false,hasWon=false,shown50Splash=false;
 let gsoulsCollected=0,gsoulsPending=0;
 let bulkMode=1; // 1=single, 10, 25, -1=max
-let endlessFarming=false,endlessTargetWave=0,gsoulDroppedWaves=new Set();
+let endlessFarming=false,endlessTargetWave=0,gsoulDroppedWaves=new Set(),queuedAdvance=false;
 
 // --- Endless save/load ---
 function saveEndless(){
@@ -485,7 +485,7 @@ function initGame(){
   gold=diff.gold; lives=diff.lives; waveNum=0; waveActive=false; gameRunning=true;
   hasWon=false; autoStart=false; shown50Splash=false;
   gsoulsCollected=0; gsoulsPending=0; highestWave=0; resetHighWave=0;
-  bulkMode=1; endlessFarming=false; endlessTargetWave=0;
+  bulkMode=1; endlessFarming=false; endlessTargetWave=0; queuedAdvance=false;
   selectedTower=0; selectedPlacedTower=null; selectedUpgPath=0;
   towers=[]; enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   document.getElementById('game-over').style.display='none';
@@ -585,7 +585,7 @@ function doClaimGsouls(){
   waveNum=0; waveActive=false; enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   gold=diff.gold; lives=1;
   towers=[]; grid=MAP.map(r=>[...r]);
-  endlessFarming=false; endlessTargetWave=0; resetHighWave=0; gsoulDroppedWaves=new Set();
+  endlessFarming=false; endlessTargetWave=0; resetHighWave=0; gsoulDroppedWaves=new Set(); queuedAdvance=false;
   selectedPlacedTower=null;
   document.getElementById('upgrade-panel').style.display='none';
   document.getElementById('farm-controls').style.display='none';
@@ -877,7 +877,13 @@ function changeFarmWave(dir){
   saveEndless();
 }
 function advanceWave(){
-  if(waveActive||!endlessFarming)return;
+  if(!endlessFarming)return;
+  if(waveActive){
+    queuedAdvance=true;
+    document.getElementById('advance-btn').textContent=`Advancing to Wave ${endlessTargetWave}...`;
+    return;
+  }
+  queuedAdvance=false;
   endlessFarming=false;
   waveNum=endlessTargetWave-1; // will be incremented by startWave
   document.getElementById('farm-controls').style.display='none';
@@ -1034,7 +1040,8 @@ function update(dt,now){
       btn.disabled=false;btn.textContent=`Start Wave ${waveNum+1}`;
     }
     if(isEndless) saveEndless();
-    if(autoStart&&lives>0) setTimeout(()=>{if(autoStart&&!waveActive&&gameRunning&&lives>0)startWave();},1500);
+    if(autoStart&&lives>0&&!endlessFarming) startWave();
+    if(queuedAdvance&&endlessFarming){queuedAdvance=false;advanceWave();}
   }
 }
 
