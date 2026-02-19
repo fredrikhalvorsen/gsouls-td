@@ -190,10 +190,57 @@
     <button id="advance-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:11px;font-weight:bold;border-radius:4px;cursor:pointer;background:#7c4dff;" onclick="advanceWave()">Advance to Wave 2</button>
     <button id="auto-start-btn" class="off" onclick="toggleAutoStart()">Auto-start: OFF</button>
     <button id="hard-reset-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#c62828;margin-top:2px;" onclick="showHardReset()">Hard Reset</button>
+    <button id="sound-btn" style="padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;margin-top:2px;" onclick="toggleSound()">Sound: OFF</button>
   </div>
 </div>
 
 <script>
+// --- Sound system (Web Audio API) ---
+let soundOn=false,audioCtx=null;
+function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function toggleSound(){
+  soundOn=!soundOn;
+  if(soundOn)initAudio();
+  const b=document.getElementById('sound-btn');
+  b.textContent=soundOn?'Sound: ON':'Sound: OFF';
+  b.style.background=soundOn?'#00897b':'#37474f';
+}
+function playTone(freq,dur,type,vol){
+  if(!soundOn||!audioCtx)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type=type||'square';o.frequency.value=freq;
+  g.gain.setValueAtTime((vol||0.1),audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start();o.stop(audioCtx.currentTime+dur);
+}
+function playNoise(dur,vol){
+  if(!soundOn||!audioCtx)return;
+  const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*dur,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+  const s=audioCtx.createBufferSource(),g=audioCtx.createGain();
+  s.buffer=buf;g.gain.setValueAtTime(vol||0.05,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  s.connect(g);g.connect(audioCtx.destination);s.start();
+}
+function sfxShoot(tt){
+  if(tt===0)playTone(800,0.06,'square',0.06); // arrow
+  else if(tt===1){playNoise(0.15,0.08);playTone(120,0.15,'sine',0.08);} // cannon
+  else if(tt===2)playTone(400,0.1,'sine',0.05); // frost
+  else if(tt===3)playTone(1200,0.08,'sawtooth',0.05); // lightning
+  else if(tt===4)playTone(900,0.05,'triangle',0.06); // sniper
+}
+function sfxHit(){playTone(300,0.05,'square',0.04);}
+function sfxCrit(){playTone(1000,0.08,'sawtooth',0.07);playTone(1500,0.1,'square',0.05);}
+function sfxKill(){playTone(500,0.08,'triangle',0.06);playTone(700,0.06,'triangle',0.04);}
+function sfxBossKill(){playTone(200,0.2,'sawtooth',0.1);playTone(400,0.15,'square',0.08);playTone(600,0.1,'triangle',0.06);}
+function sfxPlace(){playTone(600,0.06,'sine',0.06);playTone(900,0.06,'sine',0.04);}
+function sfxSell(){playTone(400,0.08,'sine',0.05);playTone(300,0.06,'sine',0.04);}
+function sfxUpgrade(){playTone(700,0.05,'sine',0.05);playTone(1000,0.05,'sine',0.04);}
+function sfxWaveStart(){playTone(500,0.1,'triangle',0.07);playTone(700,0.1,'triangle',0.05);}
+function sfxWaveComplete(){playTone(600,0.1,'sine',0.07);playTone(800,0.1,'sine',0.06);playTone(1000,0.1,'sine',0.05);}
+function sfxGsoul(){playTone(800,0.15,'sine',0.08);playTone(1200,0.15,'sine',0.06);playTone(1600,0.1,'sine',0.05);}
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const TILE = 40, COLS = 16, ROWS = 16;
@@ -574,7 +621,7 @@ function doUpgrade(idx){
     const cost=upgCost(t.upgrades[idx],idx,tt); if(gold<cost)return;
     gold-=cost; t.upgrades[idx]++; t.totalSpent+=cost;
   }
-  refreshUpPanel();
+  sfxUpgrade(); refreshUpPanel();
   updateUI();
   if(isEndless) saveEndless();
 }
@@ -605,6 +652,7 @@ function setBulkMode(mode){
 
 function sellTower(){
   if(!selectedPlacedTower)return;
+  sfxSell();
   const t=selectedPlacedTower;
   gold+=getSellValue(t);
   const c=Math.round((t.x-TILE/2)/TILE),r=Math.round((t.y-TILE/2)/TILE);
@@ -635,7 +683,7 @@ canvas.addEventListener('click',e=>{
   const d=TDEFS[selectedTower]; if(gold<d.cost)return;
   gold-=d.cost; grid[row][col]=2;
   towers.push({x:col*TILE+TILE/2,y:row*TILE+TILE/2,type:selectedTower,upgrades:selectedTower===5?[1,1]:[1,1,1,1],totalSpent:d.cost,lastShot:0,angle:0,targeting:'first',lastTick:performance.now()});
-  updateUI(); if(isEndless)saveEndless();
+  sfxPlace(); updateUI(); if(isEndless)saveEndless();
 });
 
 function updateUI(){
@@ -673,6 +721,7 @@ function startWave(){
   if(waveNum>highestWave) highestWave=waveNum;
   if(waveNum>resetHighWave) resetHighWave=waveNum;
   waveActive=true; lives=isEndless?1:lives;
+  sfxWaveStart();
   document.getElementById('start-btn').disabled=true;
   document.getElementById('start-btn').textContent=`Wave ${waveNum}...`;
   document.getElementById('boss-warn').textContent='';
@@ -760,7 +809,7 @@ function update(dt,now){
   towers.forEach(t=>{
     if(t.type===5)return;const st=getTowerStats(t),b=TDEFS[t.type];if(now-t.lastShot<st.rate)return;
     const tgts=pickTargets(t,st);if(!tgts.length)return;
-    t.lastShot=now;const mt=tgts[0].enemy;t.angle=Math.atan2(mt.y-t.y,mt.x-t.x);
+    t.lastShot=now;sfxShoot(t.type);const mt=tgts[0].enemy;t.angle=Math.atan2(mt.y-t.y,mt.x-t.x);
     for(const tg of tgts) projectiles.push({x:t.x,y:t.y,tx:tg.enemy.x,ty:tg.enemy.y,target:tg.enemy,speed:t.type===1?4:(t.type===4?9:7),tt:t.type,damage:st.damage,splash:st.splash,slow:b.slow>0?st.slow:0,chains:st.chains,critChance:st.critChance||0,alive:true});
   });
 
@@ -771,17 +820,18 @@ function update(dt,now){
     const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);
     if(d<p.speed*2){p.alive=false;const cl=TDEFS[p.tt].color;
       if(p.splash>0){enemies.forEach(e=>{if(!e.alive||!e.spawned)return;if(dist(p,e)<p.splash){e.hp-=p.damage;if(p.slow>0)e.slowTimer=1500;spawnParticles(e.x,e.y,cl,2);}});spawnParticles(p.x,p.y,'#ff9800',8);}
-      else if(p.target&&p.target.alive){let dmg=p.damage,isCrit=false;if(p.critChance>0&&Math.random()<p.critChance){dmg=Math.round(dmg*2);isCrit=true;}p.target.hp-=dmg;if(p.slow>0)p.target.slowTimer=1500;spawnParticles(p.target.x,p.target.y,isCrit?'#ffeb3b':cl,isCrit?8:4);if(isCrit)addGoldText(p.target.x,p.target.y-15,`CRIT! ${dmg}`);if(p.chains>0){addLightningBolt(p.x,p.y,p.target.x,p.target.y);doChain(p.target,p.damage,p.chains,new Set());}}}
+      else if(p.target&&p.target.alive){let dmg=p.damage,isCrit=false;if(p.critChance>0&&Math.random()<p.critChance){dmg=Math.round(dmg*2);isCrit=true;}p.target.hp-=dmg;if(p.slow>0)p.target.slowTimer=1500;spawnParticles(p.target.x,p.target.y,isCrit?'#ffeb3b':cl,isCrit?8:4);if(isCrit){addGoldText(p.target.x,p.target.y-15,`CRIT! ${dmg}`);sfxCrit();}if(p.chains>0){addLightningBolt(p.x,p.y,p.target.x,p.target.y);doChain(p.target,p.damage,p.chains,new Set());}}}
     else{p.x+=(dx/d)*p.speed;p.y+=(dy/d)*p.speed;}
   });
 
   // Kill
   enemies.forEach(e=>{
     if(e.alive&&e.hp<=0){e.alive=false;gold+=e.gold;
+      if(e.isBoss)sfxBossKill();else sfxKill();
       spawnParticles(e.x,e.y,e.isBoss?'#ff1744':'#ffeb3b',e.isBoss?20:10);
       if(e.isBoss)addGoldText(e.x,e.y,`+${e.gold}g`);
       // Gsoul drop
-      if(e.dropsGsoul&&Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}
+      if(e.dropsGsoul&&Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);sfxGsoul();}
       updateUI();
     }
   });
@@ -797,7 +847,7 @@ function update(dt,now){
 
   // Wave complete
   if(waveActive&&enemies.filter(e=>e.spawned).length===0&&enemies.length===0){
-    waveActive=false;
+    waveActive=false; sfxWaveComplete();
     const wb=10+waveNum*5,int=isEndless?0:Math.min(Math.floor(gold*INTEREST_RATE),MAX_INTEREST);
     gold+=wb+int;
     document.getElementById('interest-msg').textContent=isEndless?`+${wb}g bonus`:`+${wb}g bonus, +${int}g interest`;
