@@ -405,7 +405,7 @@ function getTowerStats(t){
   const b=TDEFS[t.type];
   const dlvl=t.upgrades[0];
   const baseDmg=b.damage*(1+(dlvl-1)*0.35)*(isEndless?gsoulDmgMul():1);
-  const bonusLevels=dlvl>=1000?Math.floor((dlvl-1000)/25):0;
+  const bonusLevels=dlvl>=100?Math.floor((dlvl-100)/25):0;
   const dmg=Math.round(baseDmg*(1+bonusLevels*0.05));
   const rate=Math.max(50,Math.round(b.rate*Math.pow(0.87,t.upgrades[1]-1)));
   const range=Math.round(b.range+(t.upgrades[3]-1)*15);
