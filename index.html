@@ -185,6 +185,7 @@
     <div class="stat">Lives: <span id="lives">20</span></div>
     <div class="stat">Wave: <span id="wave">0</span></div>
     <div class="stat">Towers: <span id="tower-count">0 / 5</span></div>
+    <div class="stat" id="highest-wave-stat" style="display:none">Highest Wave: <span id="highest-wave-display">0</span></div>
     <div class="boss-warn" id="boss-warn"></div>
 
     <div id="gsouls-panel">
@@ -752,6 +753,7 @@ function updateUI(){
   document.getElementById('lives').textContent=lives;
   document.getElementById('wave').textContent=waveNum;
   document.getElementById('tower-count').textContent=`${towers.length} / ${towerCap()}`;
+  if(isEndless){const hws=document.getElementById('highest-wave-stat');hws.style.display='block';document.getElementById('highest-wave-display').textContent=highestWave;}
   const ni=Math.min(Math.floor(gold*INTEREST_RATE),MAX_INTEREST);
   document.getElementById('ip-next').textContent=`+${ni}g`;
   const nw=waveNum+1;
