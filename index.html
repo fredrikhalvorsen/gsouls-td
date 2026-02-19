@@ -142,6 +142,16 @@
   <button id="go-continue" onclick="continueAfterWin()" style="display:none">Keep Playing</button>
 </div>
 
+<div id="gsoul-reset-confirm" class="overlay">
+  <h1 style="color:#7c4dff">RESET FOR GSOULS</h1>
+  <p>Are you sure? You will lose all towers, gold, and reset to wave 1.</p>
+  <p class="sub">Your Gsouls and shop upgrades will be kept.</p>
+  <div>
+    <button onclick="doClaimGsouls()" style="background:#7c4dff">Yes, Reset</button>
+    <button onclick="document.getElementById('gsoul-reset-confirm').style.display='none'">Cancel</button>
+  </div>
+</div>
+
 <div id="hard-reset-confirm" class="overlay">
   <h1 style="color:#ff5252">HARD RESET</h1>
   <p>Are you sure you want to hard reset?</p>
@@ -546,6 +556,10 @@ function buyGsoulUpgrade(key){
 }
 function claimGsouls(){
   if(gsoulsPending<=0)return;
+  document.getElementById('gsoul-reset-confirm').style.display='flex';
+}
+function doClaimGsouls(){
+  document.getElementById('gsoul-reset-confirm').style.display='none';
   gsoulsCollected+=gsoulsPending; gsoulsPending=0;
   // Full reset: lose towers, gold, back to wave 1 — keep gsouls
   waveNum=0; waveActive=false; enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
