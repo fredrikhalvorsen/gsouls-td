@@ -855,7 +855,8 @@ function update(dt,now){
     const spd=e.speed*(dt/16.667);
     const t=PATH[e.pathIdx],dx=t.x-e.x,dy=t.y-e.y,d=Math.hypot(dx,dy);
     if(d<spd*2){e.pathIdx++;if(e.pathIdx>=PATH.length){e.alive=false;
-      if(isEndless&&waveActive){
+      if(isEndless){
+        if(!waveActive)return; // already handled by first enemy
         // Endless: fail = go back to prev wave, farm until ready
         waveActive=false; enemies=[]; projectiles=[];
         endlessTargetWave=waveNum;
