@@ -847,8 +847,9 @@ function update(dt,now){
   enemies.forEach(e=>{
     if(!e.alive||!e.spawned)return;
     if(e.slowTimer>0){e.slowTimer-=dt;e.speed=e.baseSpeed*0.4;}else e.speed=e.baseSpeed;
+    const spd=e.speed*(dt/16.667);
     const t=PATH[e.pathIdx],dx=t.x-e.x,dy=t.y-e.y,d=Math.hypot(dx,dy);
-    if(d<e.speed*2){e.pathIdx++;if(e.pathIdx>=PATH.length){e.alive=false;
+    if(d<spd*2){e.pathIdx++;if(e.pathIdx>=PATH.length){e.alive=false;
       if(isEndless){
         // Endless: fail = go back to prev wave, farm until ready
         waveActive=false; enemies=[]; projectiles=[];
@@ -867,7 +868,7 @@ function update(dt,now){
         if(lives<=0){lives=0;updateUI();gameOver();}
       }
       return;}}
-    else{e.x+=(dx/d)*e.speed;e.y+=(dy/d)*e.speed;}
+    else{e.x+=(dx/d)*spd;e.y+=(dy/d)*spd;}
   });
 
   // Gold mines
@@ -888,11 +889,12 @@ function update(dt,now){
   projectiles.forEach(p=>{
     if(!p.alive)return;
     if(p.target&&p.target.alive){p.tx=p.target.x;p.ty=p.target.y;}
+    const pspd=p.speed*(dt/16.667);
     const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);
-    if(d<p.speed*2){p.alive=false;const cl=TDEFS[p.tt].color;
+    if(d<pspd*2){p.alive=false;const cl=TDEFS[p.tt].color;
       if(p.splash>0){enemies.forEach(e=>{if(!e.alive||!e.spawned)return;if(dist(p,e)<p.splash){e.hp-=p.damage;if(p.slow>0)e.slowTimer=1500;spawnParticles(e.x,e.y,cl,2);}});spawnParticles(p.x,p.y,'#ff9800',8);}
       else if(p.target&&p.target.alive){let dmg=p.damage,isCrit=false;if(p.critChance>0&&Math.random()<p.critChance){dmg=Math.round(dmg*2);isCrit=true;}p.target.hp-=dmg;if(p.slow>0)p.target.slowTimer=1500;spawnParticles(p.target.x,p.target.y,isCrit?'#ffeb3b':cl,isCrit?8:4);if(isCrit){addGoldText(p.target.x,p.target.y-15,`CRIT! ${dmg}`);}if(p.chains>0){addLightningBolt(p.x,p.y,p.target.x,p.target.y);doChain(p.target,p.damage,p.chains,new Set());}}}
-    else{p.x+=(dx/d)*p.speed;p.y+=(dy/d)*p.speed;}
+    else{p.x+=(dx/d)*pspd;p.y+=(dy/d)*pspd;}
   });
 
   // Kill
@@ -906,7 +908,7 @@ function update(dt,now){
     }
   });
 
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=dt;p.vx*=0.95;p.vy*=0.95;});
+  const pf=dt/16.667;particles.forEach(p=>{p.x+=p.vx*pf;p.y+=p.vy*pf;p.life-=dt;p.vx*=Math.pow(0.95,pf);p.vy*=Math.pow(0.95,pf);});
   lightningBolts.forEach(b=>{b.life-=dt;});
   goldTexts.forEach(g=>{g.life-=dt;g.y-=0.3;});
   enemies=enemies.filter(e=>e.alive||!e.spawned);
