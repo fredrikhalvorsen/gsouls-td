@@ -695,10 +695,11 @@ function startWave(){
   }
   const hasFast=waveNum>=3,hasTank=waveNum>=5,isBoss=waveNum%5===0;
   const isCluster=waveNum>=3&&(waveNum-3)%5===0&&!isBoss;
+  if(isCluster) baseHp*=0.7;
   const gm=diff.goldMul;
 
   if(!isBoss){
-    const spawnPer=isCluster?7:1;
+    const spawnPer=isCluster?(waveNum<=20?3:waveNum<=40?4:waveNum<=60?5:7):1;
     for(let i=0;i<count;i++){
       for(let s=0;s<spawnPer;s++){
         let tp='normal',hp=baseHp,sp=baseSpeed,cl='#e53935',ra=8,gl=Math.round(5*gm);
