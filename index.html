@@ -811,7 +811,7 @@ function startWave(){
   } else {
     const bn=waveNum/5;
     let bHp,bGl;
-    if(isEndless){bHp=baseHp*(10+bn*2.2);if(waveNum>=50)bHp*=1.05/1.25;bGl=Math.round((30+bn*20)*gm);}
+    if(isEndless){bHp=baseHp*(10+bn*3.5);if(waveNum>=50)bHp*=1.05/1.25;bGl=Math.round((30+bn*20)*gm);}
     else{bHp=baseHp*(8+bn*3)*diff.hpMul;bGl=Math.round((40+bn*15)*gm);}
     enemies.push({pathIdx:0,x:PATH[0].x,y:PATH[0].y,hp:bHp,maxHp:bHp,speed:baseSpeed*0.4,baseSpeed:baseSpeed*0.4,color:'#ff1744',radius:16,gold:bGl,type:'boss',spawned:false,spawnDelay:400,spawnTimer:0,slowTimer:0,alive:true,isBoss:true,dropsGsoul:isEndless&&waveNum>=50});
   }
