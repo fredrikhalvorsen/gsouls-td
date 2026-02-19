@@ -235,7 +235,14 @@
       <button id="start-btn" onclick="startWave()">Start Wave 1</button>
       <button id="restart-btn" onclick="backToMenu()">Restart</button>
     </div>
-    <button id="advance-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:11px;font-weight:bold;border-radius:4px;cursor:pointer;background:#7c4dff;" onclick="advanceWave()">Advance to Wave 2</button>
+    <div id="farm-controls" style="display:none;margin-top:3px;">
+      <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px;">
+        <button onclick="changeFarmWave(-1)" style="padding:3px 7px;border:none;color:#fff;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;font-size:12px;">&#9664;</button>
+        <span id="farm-label" style="flex:1;text-align:center;color:#aaa;font-size:10px;font-weight:bold;">Farm Wave 1</span>
+        <button onclick="changeFarmWave(1)" style="padding:3px 7px;border:none;color:#fff;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;font-size:12px;">&#9654;</button>
+      </div>
+      <button id="advance-btn" style="padding:5px;width:100%;border:none;color:#fff;font-size:11px;font-weight:bold;border-radius:4px;cursor:pointer;background:#7c4dff;" onclick="advanceWave()">Advance to Wave 2</button>
+    </div>
     <button id="auto-start-btn" class="off" onclick="toggleAutoStart()">Auto-start: OFF</button>
     <button id="hard-reset-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#c62828;margin-top:2px;" onclick="showHardReset()">Hard Reset</button>
     <!-- Sound button hidden for now: <button id="sound-btn" style="padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;margin-top:2px;" onclick="toggleSound()">Sound: OFF</button> -->
@@ -393,10 +400,12 @@ function loadEndless(){
   const btn=document.getElementById('start-btn'); btn.disabled=false;
   if(endlessFarming){
     btn.textContent=`Farm Wave ${waveNum}`;
-    const adv=document.getElementById('advance-btn');adv.style.display='block';adv.textContent=`Advance to Wave ${endlessTargetWave}`;
+    const fc=document.getElementById('farm-controls');fc.style.display='block';
+    document.getElementById('farm-label').textContent=`Farm Wave ${waveNum}`;
+    document.getElementById('advance-btn').textContent=`Advance to Wave ${endlessTargetWave}`;
   } else {
     btn.textContent=`Start Wave ${waveNum+1}`;
-    document.getElementById('advance-btn').style.display='none';
+    document.getElementById('farm-controls').style.display='none';
   }
   const ab=document.getElementById('auto-start-btn'); ab.className='off'; ab.textContent='Auto-start: OFF';
   selectTower(0); updateUI();
@@ -451,7 +460,7 @@ function initGame(){
   document.getElementById('bulk-row').style.display=isEndless?'flex':'none';
   const ab=document.getElementById('auto-start-btn'); ab.className='off'; ab.textContent='Auto-start: OFF';
   const btn=document.getElementById('start-btn'); btn.disabled=false; btn.textContent='Start Wave 1';
-  document.getElementById('advance-btn').style.display='none';
+  document.getElementById('farm-controls').style.display='none';
   [1,10,25,-1].forEach(m=>{const id=m===-1?'bulk-max':'bulk-'+m;const el=document.getElementById(id);if(el)el.classList.toggle('active',m===1);});
   selectTower(0); updateUI();
 }
@@ -483,7 +492,7 @@ function claimGsouls(){
   endlessFarming=false; endlessTargetWave=0; resetHighWave=0;
   selectedPlacedTower=null;
   document.getElementById('upgrade-panel').style.display='none';
-  document.getElementById('advance-btn').style.display='none';
+  document.getElementById('farm-controls').style.display='none';
   const btn=document.getElementById('start-btn');btn.disabled=false;btn.textContent='Start Wave 1';
   document.getElementById('interest-msg').textContent='Gsouls collected! Full reset to wave 1';
   setTimeout(()=>{document.getElementById('interest-msg').textContent='';},3000);
@@ -759,11 +768,20 @@ function updateUI(){
 }
 
 // --- Waves ---
+function changeFarmWave(dir){
+  if(!endlessFarming||waveActive)return;
+  const nw=waveNum+dir;
+  if(nw<1||nw>=endlessTargetWave)return;
+  waveNum=nw;
+  document.getElementById('farm-label').textContent=`Farm Wave ${waveNum}`;
+  const btn=document.getElementById('start-btn');btn.textContent=`Farm Wave ${waveNum}`;
+  saveEndless();
+}
 function advanceWave(){
   if(waveActive||!endlessFarming)return;
   endlessFarming=false;
   waveNum=endlessTargetWave-1; // will be incremented by startWave
-  document.getElementById('advance-btn').style.display='none';
+  document.getElementById('farm-controls').style.display='none';
   startWave();
 }
 function startWave(){
@@ -840,7 +858,9 @@ function update(dt,now){
         document.getElementById('interest-msg').textContent=`Wave ${endlessTargetWave} failed! Farming wave ${waveNum}`;
         setTimeout(()=>{document.getElementById('interest-msg').textContent='';},4000);
         const btn=document.getElementById('start-btn');btn.disabled=false;btn.textContent=`Farm Wave ${waveNum}`;
-        const adv=document.getElementById('advance-btn');adv.style.display='block';adv.textContent=`Advance to Wave ${endlessTargetWave}`;
+        const fc=document.getElementById('farm-controls');fc.style.display='block';
+        document.getElementById('farm-label').textContent=`Farm Wave ${waveNum}`;
+        document.getElementById('advance-btn').textContent=`Advance to Wave ${endlessTargetWave}`;
         updateUI(); saveEndless(); return;
       } else {
         lives-=e.isBoss?5:1; updateUI();
@@ -908,6 +928,7 @@ function update(dt,now){
     const btn=document.getElementById('start-btn');
     if(endlessFarming){
       btn.disabled=false;btn.textContent=`Farm Wave ${waveNum}`;
+      document.getElementById('farm-label').textContent=`Farm Wave ${waveNum}`;
     } else {
       btn.disabled=false;btn.textContent=`Start Wave ${waveNum+1}`;
     }
