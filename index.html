@@ -190,7 +190,7 @@
     <button id="advance-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:11px;font-weight:bold;border-radius:4px;cursor:pointer;background:#7c4dff;" onclick="advanceWave()">Advance to Wave 2</button>
     <button id="auto-start-btn" class="off" onclick="toggleAutoStart()">Auto-start: OFF</button>
     <button id="hard-reset-btn" style="display:none;padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#c62828;margin-top:2px;" onclick="showHardReset()">Hard Reset</button>
-    <button id="sound-btn" style="padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;margin-top:2px;" onclick="toggleSound()">Sound: OFF</button>
+    <!-- Sound button hidden for now: <button id="sound-btn" style="padding:5px;border:none;color:#fff;font-size:10px;font-weight:bold;border-radius:3px;cursor:pointer;background:#37474f;margin-top:2px;" onclick="toggleSound()">Sound: OFF</button> -->
   </div>
 </div>
 
@@ -621,7 +621,7 @@ function doUpgrade(idx){
     const cost=upgCost(t.upgrades[idx],idx,tt); if(gold<cost)return;
     gold-=cost; t.upgrades[idx]++; t.totalSpent+=cost;
   }
-  sfxUpgrade(); refreshUpPanel();
+  refreshUpPanel();
   updateUI();
   if(isEndless) saveEndless();
 }
@@ -652,7 +652,6 @@ function setBulkMode(mode){
 
 function sellTower(){
   if(!selectedPlacedTower)return;
-  sfxSell();
   const t=selectedPlacedTower;
   gold+=getSellValue(t);
   const c=Math.round((t.x-TILE/2)/TILE),r=Math.round((t.y-TILE/2)/TILE);
@@ -683,7 +682,7 @@ canvas.addEventListener('click',e=>{
   const d=TDEFS[selectedTower]; if(gold<d.cost)return;
   gold-=d.cost; grid[row][col]=2;
   towers.push({x:col*TILE+TILE/2,y:row*TILE+TILE/2,type:selectedTower,upgrades:selectedTower===5?[1,1]:[1,1,1,1],totalSpent:d.cost,lastShot:0,angle:0,targeting:'first',lastTick:performance.now()});
-  sfxPlace(); updateUI(); if(isEndless)saveEndless();
+  updateUI(); if(isEndless)saveEndless();
 });
 
 function updateUI(){
@@ -721,7 +720,6 @@ function startWave(){
   if(waveNum>highestWave) highestWave=waveNum;
   if(waveNum>resetHighWave) resetHighWave=waveNum;
   waveActive=true; lives=isEndless?1:lives;
-  sfxWaveStart();
   document.getElementById('start-btn').disabled=true;
   document.getElementById('start-btn').textContent=`Wave ${waveNum}...`;
   document.getElementById('boss-warn').textContent='';
@@ -809,7 +807,7 @@ function update(dt,now){
   towers.forEach(t=>{
     if(t.type===5)return;const st=getTowerStats(t),b=TDEFS[t.type];if(now-t.lastShot<st.rate)return;
     const tgts=pickTargets(t,st);if(!tgts.length)return;
-    t.lastShot=now;sfxShoot(t.type);const mt=tgts[0].enemy;t.angle=Math.atan2(mt.y-t.y,mt.x-t.x);
+    t.lastShot=now;const mt=tgts[0].enemy;t.angle=Math.atan2(mt.y-t.y,mt.x-t.x);
     for(const tg of tgts) projectiles.push({x:t.x,y:t.y,tx:tg.enemy.x,ty:tg.enemy.y,target:tg.enemy,speed:t.type===1?4:(t.type===4?9:7),tt:t.type,damage:st.damage,splash:st.splash,slow:b.slow>0?st.slow:0,chains:st.chains,critChance:st.critChance||0,alive:true});
   });
 
@@ -820,18 +818,17 @@ function update(dt,now){
     const dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);
     if(d<p.speed*2){p.alive=false;const cl=TDEFS[p.tt].color;
       if(p.splash>0){enemies.forEach(e=>{if(!e.alive||!e.spawned)return;if(dist(p,e)<p.splash){e.hp-=p.damage;if(p.slow>0)e.slowTimer=1500;spawnParticles(e.x,e.y,cl,2);}});spawnParticles(p.x,p.y,'#ff9800',8);}
-      else if(p.target&&p.target.alive){let dmg=p.damage,isCrit=false;if(p.critChance>0&&Math.random()<p.critChance){dmg=Math.round(dmg*2);isCrit=true;}p.target.hp-=dmg;if(p.slow>0)p.target.slowTimer=1500;spawnParticles(p.target.x,p.target.y,isCrit?'#ffeb3b':cl,isCrit?8:4);if(isCrit){addGoldText(p.target.x,p.target.y-15,`CRIT! ${dmg}`);sfxCrit();}if(p.chains>0){addLightningBolt(p.x,p.y,p.target.x,p.target.y);doChain(p.target,p.damage,p.chains,new Set());}}}
+      else if(p.target&&p.target.alive){let dmg=p.damage,isCrit=false;if(p.critChance>0&&Math.random()<p.critChance){dmg=Math.round(dmg*2);isCrit=true;}p.target.hp-=dmg;if(p.slow>0)p.target.slowTimer=1500;spawnParticles(p.target.x,p.target.y,isCrit?'#ffeb3b':cl,isCrit?8:4);if(isCrit){addGoldText(p.target.x,p.target.y-15,`CRIT! ${dmg}`);}if(p.chains>0){addLightningBolt(p.x,p.y,p.target.x,p.target.y);doChain(p.target,p.damage,p.chains,new Set());}}}
     else{p.x+=(dx/d)*p.speed;p.y+=(dy/d)*p.speed;}
   });
 
   // Kill
   enemies.forEach(e=>{
     if(e.alive&&e.hp<=0){e.alive=false;gold+=e.gold;
-      if(e.isBoss)sfxBossKill();else sfxKill();
       spawnParticles(e.x,e.y,e.isBoss?'#ff1744':'#ffeb3b',e.isBoss?20:10);
       if(e.isBoss)addGoldText(e.x,e.y,`+${e.gold}g`);
       // Gsoul drop
-      if(e.dropsGsoul&&Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);sfxGsoul();}
+      if(e.dropsGsoul&&Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}
       updateUI();
     }
   });
@@ -847,7 +844,7 @@ function update(dt,now){
 
   // Wave complete
   if(waveActive&&enemies.filter(e=>e.spawned).length===0&&enemies.length===0){
-    waveActive=false; sfxWaveComplete();
+    waveActive=false;
     const wb=10+waveNum*5,int=isEndless?0:Math.min(Math.floor(gold*INTEREST_RATE),MAX_INTEREST);
     gold+=wb+int;
     document.getElementById('interest-msg').textContent=isEndless?`+${wb}g bonus`:`+${wb}g bonus, +${int}g interest`;
