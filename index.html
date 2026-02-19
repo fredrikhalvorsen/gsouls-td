@@ -901,7 +901,7 @@ function update(dt,now){
       spawnParticles(e.x,e.y,e.isBoss?'#ff1744':'#ffeb3b',e.isBoss?20:10);
       if(e.isBoss)addGoldText(e.x,e.y,`+${e.gold}g`);
       // Gsoul drop
-      if(e.dropsGsoul&&!gsoulDroppedWaves.has(waveNum)&&Math.random()<0.4){gsoulDroppedWaves.add(waveNum);const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}
+      if(e.dropsGsoul&&!gsoulDroppedWaves.has(waveNum)){gsoulDroppedWaves.add(waveNum);if(Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}}
       updateUI();
     }
   });
