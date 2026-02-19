@@ -429,7 +429,7 @@ function loadEndless(){
   grid=d.grid; gold=d.gold; waveNum=d.waveActive?d.waveNum-1:d.waveNum; lives=1; waveActive=false; gameRunning=true;
   hasWon=false; shown50Splash=d.shown50Splash||false; autoStart=false;
   gsoulsCollected=d.gsoulsCollected||0; gsoulsPending=d.gsoulsPending||0;
-  bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum; gsoulDroppedWaves=new Set(d.gsoulDroppedWaves||[]); gsoulUpgrades=d.gsoulUpgrades||{dmgBoost:0};
+  bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum; gsoulDroppedWaves=new Set(d.gsoulDroppedWaves||[]); gsoulUpgrades={dmgBoost:0,goldBoost:0,...(d.gsoulUpgrades||{})};
   selectedTower=0; selectedPlacedTower=null; selectedUpgPath=0;
   enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   towers=d.towers.map(t=>({...t,lastShot:gameTime,angle:0,lastTick:gameTime}));
