@@ -363,7 +363,7 @@ let towers,enemies,projectiles,particles,lightningBolts,goldTexts;
 let autoStart=false,hasWon=false,shown50Splash=false;
 let gsoulsCollected=0,gsoulsPending=0;
 let bulkMode=1; // 1=single, 10, 25, -1=max
-let endlessFarming=false,endlessTargetWave=0;
+let endlessFarming=false,endlessTargetWave=0,gsoulDroppedWaves=new Set();
 
 // --- Endless save/load ---
 function saveEndless(){
@@ -372,7 +372,7 @@ function saveEndless(){
     gold,waveNum,waveActive,gsoulsCollected,gsoulsPending,
     towers:towers.map(t=>({x:t.x,y:t.y,type:t.type,upgrades:[...t.upgrades],totalSpent:t.totalSpent,targeting:t.targeting})),
     grid:grid.map(r=>[...r]),shown50Splash,
-    endlessFarming,endlessTargetWave,highestWave,resetHighWave
+    endlessFarming,endlessTargetWave,highestWave,resetHighWave,gsoulDroppedWaves:[...gsoulDroppedWaves]
   };
   localStorage.setItem(SAVE_KEY,JSON.stringify(data));
 }
@@ -388,7 +388,7 @@ function loadEndless(){
   grid=d.grid; gold=d.gold; waveNum=d.waveActive?d.waveNum-1:d.waveNum; lives=1; waveActive=false; gameRunning=true;
   hasWon=false; shown50Splash=d.shown50Splash||false; autoStart=false;
   gsoulsCollected=d.gsoulsCollected||0; gsoulsPending=d.gsoulsPending||0;
-  bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum;
+  bulkMode=1; endlessFarming=d.endlessFarming||false; endlessTargetWave=d.endlessTargetWave||0; highestWave=d.highestWave||d.waveNum; resetHighWave=d.resetHighWave||d.waveNum; gsoulDroppedWaves=new Set(d.gsoulDroppedWaves||[]);
   selectedTower=0; selectedPlacedTower=null; selectedUpgPath=0;
   enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   towers=d.towers.map(t=>({...t,lastShot:0,angle:0,lastTick:performance.now()}));
@@ -489,7 +489,7 @@ function claimGsouls(){
   waveNum=0; waveActive=false; enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   gold=diff.gold; lives=1;
   towers=[]; grid=MAP.map(r=>[...r]);
-  endlessFarming=false; endlessTargetWave=0; resetHighWave=0;
+  endlessFarming=false; endlessTargetWave=0; resetHighWave=0; gsoulDroppedWaves=new Set();
   selectedPlacedTower=null;
   document.getElementById('upgrade-panel').style.display='none';
   document.getElementById('farm-controls').style.display='none';
@@ -503,7 +503,7 @@ function cancelHardReset(){document.getElementById('hard-reset-confirm').style.d
 function doHardReset(){
   document.getElementById('hard-reset-confirm').style.display='none';
   deleteSave();
-  gsoulsCollected=0; gsoulsPending=0; highestWave=0;
+  gsoulsCollected=0; gsoulsPending=0; highestWave=0; gsoulDroppedWaves=new Set();
   initGame();
 }
 
@@ -901,7 +901,7 @@ function update(dt,now){
       spawnParticles(e.x,e.y,e.isBoss?'#ff1744':'#ffeb3b',e.isBoss?20:10);
       if(e.isBoss)addGoldText(e.x,e.y,`+${e.gold}g`);
       // Gsoul drop
-      if(e.dropsGsoul&&Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}
+      if(e.dropsGsoul&&!gsoulDroppedWaves.has(waveNum)&&Math.random()<0.4){gsoulDroppedWaves.add(waveNum);const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}
       updateUI();
     }
   });
