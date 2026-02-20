@@ -812,7 +812,10 @@ function setBulkMode(mode){
 function sellTower(){
   if(!selectedPlacedTower)return;
   const t=selectedPlacedTower;
-  gold+=getSellValue(t);
+  const sv=getSellValue(t);
+  const name=TDEFS[t.type].name;
+  if(!confirm(`Sell ${name} for ${sv}g?`))return;
+  gold+=sv;
   const c=Math.round((t.x-TILE/2)/TILE),r=Math.round((t.y-TILE/2)/TILE);
   grid[r][c]=0; towers=towers.filter(tw=>tw!==t);
   selectedPlacedTower=null;
