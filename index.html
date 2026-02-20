@@ -761,8 +761,9 @@ function getAuraStats(t){
   return{dmgBoost,rangeBoost,range};
 }
 function getAuraBoost(tower){
-  let dmgMul=1,rangeMul=1;
-  towers.forEach(a=>{if(a.type!==6||a===tower)return;const as=getAuraStats(a);if(dist(a,tower)<as.range){dmgMul*=as.dmgBoost;rangeMul*=as.rangeBoost;}});
+  let dmgMul=1,rangeMul=1,best=null,bestDmg=0;
+  towers.forEach(a=>{if(a.type!==6||a===tower)return;const as=getAuraStats(a);if(dist(a,tower)<as.range&&as.dmgBoost>bestDmg){bestDmg=as.dmgBoost;best=as;}});
+  if(best){dmgMul=best.dmgBoost;rangeMul=best.rangeBoost;}
   return{dmgMul,rangeMul};
 }
 function getSellValue(t){return Math.round(t.totalSpent*0.6);}
