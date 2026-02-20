@@ -1095,7 +1095,7 @@ function startWave(){
     let bHp,bGl;
     if(isEndless){bHp=baseHp*(10+bn*4.9);if(waveNum>=50)bHp*=1.05/1.25;bGl=Math.round((30+bn*20)*gm);}
     else{bHp=baseHp*(8+bn*3)*diff.hpMul;bGl=Math.round((40+bn*15)*gm);}
-    enemies.push({pathIdx:0,x:PATH[0].x,y:PATH[0].y,hp:bHp,maxHp:bHp,speed:baseSpeed*0.4,baseSpeed:baseSpeed*0.4,color:'#ff1744',radius:16,gold:bGl,type:'boss',spawned:false,spawnDelay:400,spawnTimer:0,slowTimer:0,alive:true,isBoss:true,dropsGsoul:isEndless&&waveNum>=50});
+    enemies.push({pathIdx:0,x:PATH[0].x,y:PATH[0].y,hp:bHp,maxHp:bHp,speed:baseSpeed*0.4,baseSpeed:baseSpeed*0.4,color:'#ff1744',radius:16,gold:bGl,type:'boss',spawned:false,spawnDelay:400,spawnTimer:0,slowTimer:0,alive:true,isBoss:true,dropsGsoul:isEndless&&(waveNum===5||waveNum>=50)});
   }
 }
 
@@ -1170,7 +1170,7 @@ function update(dt,now){
       spawnParticles(e.x,e.y,e.isBoss?'#ff1744':'#ffeb3b',e.isBoss?20:10);
       if(e.isBoss)addGoldText(e.x,e.y,`+${e.gold}g`);
       // Gsoul drop
-      if(e.dropsGsoul&&!gsoulDroppedWaves.has(waveNum)){gsoulDroppedWaves.add(waveNum);if(Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}}
+      if(e.dropsGsoul&&!gsoulDroppedWaves.has(waveNum)){gsoulDroppedWaves.add(waveNum);if(waveNum===5){const gs=300;gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsouls!`);spawnParticles(e.x,e.y,'#7c4dff',15);}else if(Math.random()<0.4){const gs=1+Math.floor(waveNum/25);gsoulsPending+=gs;addGoldText(e.x,e.y-20,`+${gs} Gsoul${gs>1?'s':''}!`);spawnParticles(e.x,e.y,'#7c4dff',15);}}
       updateUI();
     }
   });
