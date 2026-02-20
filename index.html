@@ -945,7 +945,7 @@ function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function spawnParticles(x,y,c,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,color:c,life:300+Math.random()*300,radius:2+Math.random()*2});}}
 function addGoldText(x,y,t){goldTexts.push({x,y,text:t,life:1200});}
 function addLightningBolt(x1,y1,x2,y2){const s=[];for(let i=0;i<=6;i++){const t=i/6;s.push({x:x1+(x2-x1)*t+(i>0&&i<6?(Math.random()-0.5)*20:0),y:y1+(y2-y1)*t+(i>0&&i<6?(Math.random()-0.5)*20:0)});}lightningBolts.push({segs:s,life:200});}
-function doChain(e,dmg,ch,hit){if(ch<=0)return;hit.add(e);let cl=null,cd=100;enemies.forEach(x=>{if(!x.alive||!x.spawned||hit.has(x))return;const d=dist(e,x);if(d<cd){cl=x;cd=d;}});if(cl){const d=Math.round(dmg*0.7);cl.hp-=d;addLightningBolt(e.x,e.y,cl.x,cl.y);spawnParticles(cl.x,cl.y,'#64ffda',3);doChain(cl,d,ch-1,hit);}}
+function doChain(e,dmg,ch,hit){if(ch<=0)return;hit.add(e);let cl=null,cd=100;enemies.forEach(x=>{if(!x.alive||!x.spawned||hit.has(x))return;const d=dist(e,x);if(d<cd){cl=x;cd=d;}});if(cl){const d=Math.round(dmg*0.85);cl.hp-=d;addLightningBolt(e.x,e.y,cl.x,cl.y);spawnParticles(cl.x,cl.y,'#64ffda',3);doChain(cl,d,ch-1,hit);}}
 function pickTargets(tw,st){const r=[];enemies.forEach(e=>{if(!e.alive||!e.spawned)return;const d=dist(tw,e);if(d<st.range)r.push({enemy:e,dist:d});});if(!r.length)return[];switch(tw.targeting){case'first':r.sort((a,b)=>b.enemy.pathIdx-a.enemy.pathIdx);break;case'last':r.sort((a,b)=>a.enemy.pathIdx-b.enemy.pathIdx);break;case'strong':r.sort((a,b)=>b.enemy.maxHp-a.enemy.maxHp);break;}return r.slice(0,st.targets);}
 
 function update(dt,now){
