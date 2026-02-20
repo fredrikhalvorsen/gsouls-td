@@ -924,9 +924,10 @@ function startWave(){
     const spawnPer=isCluster?(waveNum<=20?3:waveNum<=40?4:waveNum<=60?5:7):1;
     for(let i=0;i<count;i++){
       for(let s=0;s<spawnPer;s++){
-        let tp='normal',hp=baseHp,sp=baseSpeed,cl='#e53935',ra=8,gl=Math.round(5*gm);
-        if(hasTank&&Math.random()<0.2){tp='tank';hp=baseHp*3;sp=baseSpeed*0.6;cl='#795548';ra=12;gl=Math.round(15*gm);}
-        else if(hasFast&&Math.random()<0.3){tp='fast';hp=baseHp*0.5;sp=baseSpeed*1.7;cl='#ffeb3b';ra=6;gl=Math.round(7*gm);}
+        const waveMul=isEndless&&waveNum>=100?1+(waveNum-100)*0.15:1;
+        let tp='normal',hp=baseHp*waveMul,sp=baseSpeed,cl='#e53935',ra=8,gl=Math.round(5*gm);
+        if(hasTank&&Math.random()<0.2){tp='tank';hp=baseHp*waveMul*3;sp=baseSpeed*0.6;cl='#795548';ra=12;gl=Math.round(15*gm);}
+        else if(hasFast&&Math.random()<0.3){tp='fast';hp=baseHp*waveMul*0.5;sp=baseSpeed*1.7;cl='#ffeb3b';ra=6;gl=Math.round(7*gm);}
         enemies.push({pathIdx:0,x:PATH[0].x,y:PATH[0].y,hp,maxHp:hp,speed:sp,baseSpeed:sp,color:cl,radius:ra,gold:gl,type:tp,spawned:false,spawnDelay:i*400+s*60,spawnTimer:0,slowTimer:0,alive:true,isBoss:false});
       }
     }
