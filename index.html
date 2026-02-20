@@ -351,7 +351,7 @@ const TARGETING_MODES = ['first','last','strong'];
 const SAVE_KEY = 'td_endless_save';
 
 const MAPS = [
-  { // Map 0 (waves 0-199): Classic zigzag
+  { // Map 0 (waves 0-499): Classic zigzag
     map:[
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
       [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
@@ -371,7 +371,7 @@ const MAPS = [
       {x:13,y:13},{x:14,y:13},{x:15,y:13},{x:15,y:14},{x:15,y:15}
     ]
   },
-  { // Map 1 (waves 200-399): Serpentine
+  { // Map 1 (waves 500-999): Serpentine
     map:[
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
@@ -401,7 +401,7 @@ const MAPS = [
       {x:14,y:14},{x:14,y:15}
     ]
   },
-  { // Map 2 (waves 400-599): Descending zigzag
+  { // Map 2 (waves 1000-1499): Descending zigzag
     map:[
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
@@ -431,7 +431,7 @@ const MAPS = [
       {x:2,y:14},{x:2,y:15}
     ]
   },
-  { // Map 3 (waves 600+): Vertical serpentine - longest path
+  { // Map 3 (waves 1500+): Vertical serpentine - longest path
     map:[
       [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
       [1,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0],
@@ -471,7 +471,7 @@ let PATH = MAPS[0].path.map(p=>({x:p.x*TILE+TILE/2,y:p.y*TILE+TILE/2}));
 let currentMap = 0;
 
 function currentMapIndex(){
-  return Math.min(Math.floor(highestWave/200), MAPS.length-1);
+  return Math.min(Math.floor(highestWave/500), MAPS.length-1);
 }
 function loadMap(idx){
   currentMap = idx;
@@ -993,7 +993,7 @@ function updateUI(){
   document.getElementById('tower-count').textContent=`${towers.length} / ${towerCap()}`;
   if(isEndless){const hws=document.getElementById('highest-wave-stat');hws.style.display='block';document.getElementById('highest-wave-display').textContent=highestWave;
     const ms=document.getElementById('map-stat');ms.style.display='block';document.getElementById('map-display').textContent=currentMap+1;document.getElementById('map-total').textContent=MAPS.length;
-    const nextUnlock=currentMap<MAPS.length-1?(currentMap+1)*200:null;if(nextUnlock)ms.title=`Next map unlocks at wave ${nextUnlock}`;else ms.title='All maps unlocked!';
+    const nextUnlock=currentMap<MAPS.length-1?(currentMap+1)*500:null;if(nextUnlock)ms.title=`Next map unlocks at wave ${nextUnlock}`;else ms.title='All maps unlocked!';
     const auraBtn=document.getElementById('tb6'),auraUnlocked=highestWave>=200;
     auraBtn.style.opacity=auraUnlocked?'1':'0.5';auraBtn.style.pointerEvents=auraUnlocked?'':'none';
     document.getElementById('tb6-name').textContent=auraUnlocked?'Aura Tower':'\uD83D\uDD12 Aura Tower';
