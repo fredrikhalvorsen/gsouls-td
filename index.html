@@ -224,6 +224,7 @@
     <div class="stat">Wave: <span id="wave">0</span></div>
     <div class="stat">Towers: <span id="tower-count">0 / 5</span></div>
     <div class="stat" id="highest-wave-stat" style="display:none">Highest Wave: <span id="highest-wave-display">0</span></div>
+    <div class="stat" id="map-stat" style="display:none">Map: <span id="map-display">1</span> / <span id="map-total">4</span></div>
     <div class="boss-warn" id="boss-warn"></div>
 
     <div id="gsouls-panel">
@@ -348,24 +349,135 @@ const INTEREST_RATE = 0.10, MAX_INTEREST = 50;
 const TARGETING_MODES = ['first','last','strong'];
 const SAVE_KEY = 'td_endless_save';
 
-const MAP = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
-  [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+const MAPS = [
+  { // Map 0 (waves 0-199): Classic zigzag
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],[0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    ],
+    path:[
+      {x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:1},{x:4,y:2},{x:4,y:3},{x:4,y:4},
+      {x:5,y:4},{x:6,y:4},{x:7,y:4},{x:8,y:4},{x:9,y:4},{x:10,y:4},{x:10,y:5},{x:10,y:6},
+      {x:10,y:7},{x:9,y:7},{x:8,y:7},{x:7,y:7},{x:6,y:7},{x:5,y:7},{x:4,y:7},{x:3,y:7},{x:2,y:7},
+      {x:2,y:8},{x:2,y:9},{x:2,y:10},{x:3,y:10},{x:4,y:10},{x:5,y:10},{x:6,y:10},{x:7,y:10},
+      {x:7,y:11},{x:7,y:12},{x:7,y:13},{x:8,y:13},{x:9,y:13},{x:10,y:13},{x:11,y:13},{x:12,y:13},
+      {x:13,y:13},{x:14,y:13},{x:15,y:13},{x:15,y:14},{x:15,y:15}
+    ]
+  },
+  { // Map 1 (waves 200-399): Serpentine
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+    ],
+    path:[
+      {x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:1},{x:5,y:1},{x:6,y:1},{x:7,y:1},{x:8,y:1},{x:9,y:1},{x:10,y:1},{x:11,y:1},{x:12,y:1},{x:13,y:1},
+      {x:13,y:2},{x:13,y:3},{x:12,y:3},{x:11,y:3},{x:10,y:3},{x:9,y:3},{x:8,y:3},{x:7,y:3},{x:6,y:3},{x:5,y:3},{x:4,y:3},{x:3,y:3},{x:2,y:3},
+      {x:2,y:4},{x:2,y:5},{x:3,y:5},{x:4,y:5},{x:5,y:5},{x:6,y:5},{x:7,y:5},{x:8,y:5},{x:9,y:5},{x:10,y:5},{x:11,y:5},{x:12,y:5},{x:13,y:5},
+      {x:13,y:6},{x:13,y:7},{x:12,y:7},{x:11,y:7},{x:10,y:7},{x:9,y:7},{x:8,y:7},{x:7,y:7},{x:6,y:7},{x:5,y:7},{x:4,y:7},{x:3,y:7},{x:2,y:7},
+      {x:2,y:8},{x:2,y:9},{x:3,y:9},{x:4,y:9},{x:5,y:9},{x:6,y:9},{x:7,y:9},{x:8,y:9},{x:9,y:9},{x:10,y:9},{x:11,y:9},{x:12,y:9},{x:13,y:9},
+      {x:13,y:10},{x:13,y:11},{x:12,y:11},{x:11,y:11},{x:10,y:11},{x:9,y:11},{x:8,y:11},{x:7,y:11},{x:6,y:11},{x:5,y:11},{x:4,y:11},{x:3,y:11},{x:2,y:11},
+      {x:2,y:12},{x:2,y:13},{x:3,y:13},{x:4,y:13},{x:5,y:13},{x:6,y:13},{x:7,y:13},{x:8,y:13},{x:9,y:13},{x:10,y:13},{x:11,y:13},{x:12,y:13},{x:13,y:13},{x:14,y:13},
+      {x:14,y:14},{x:14,y:15}
+    ]
+  },
+  { // Map 2 (waves 400-599): Descending zigzag
+    map:[
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
+      [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+    path:[
+      {x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:1},{x:5,y:1},{x:6,y:1},{x:7,y:1},{x:8,y:1},{x:9,y:1},{x:10,y:1},{x:11,y:1},{x:12,y:1},{x:13,y:1},
+      {x:13,y:2},{x:13,y:3},{x:13,y:4},{x:13,y:5},
+      {x:12,y:5},{x:11,y:5},{x:10,y:5},{x:9,y:5},{x:8,y:5},{x:7,y:5},{x:6,y:5},{x:5,y:5},{x:4,y:5},{x:3,y:5},
+      {x:3,y:6},{x:3,y:7},{x:3,y:8},{x:3,y:9},
+      {x:4,y:9},{x:5,y:9},{x:6,y:9},{x:7,y:9},{x:8,y:9},{x:9,y:9},{x:10,y:9},{x:11,y:9},{x:12,y:9},
+      {x:12,y:10},{x:12,y:11},{x:12,y:12},{x:12,y:13},
+      {x:11,y:13},{x:10,y:13},{x:9,y:13},{x:8,y:13},{x:7,y:13},{x:6,y:13},{x:5,y:13},{x:4,y:13},{x:3,y:13},{x:2,y:13},
+      {x:2,y:14},{x:2,y:15}
+    ]
+  },
+  { // Map 3 (waves 600+): Vertical serpentine - longest path
+    map:[
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0],
+      [1,1,1,1,0,0,1,1,1,1,0,0,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    ],
+    path:[
+      {x:0,y:0},{x:0,y:1},{x:0,y:2},{x:0,y:3},{x:0,y:4},{x:0,y:5},{x:0,y:6},{x:0,y:7},{x:0,y:8},{x:0,y:9},{x:0,y:10},{x:0,y:11},{x:0,y:12},{x:0,y:13},{x:0,y:14},
+      {x:1,y:14},{x:2,y:14},{x:3,y:14},
+      {x:3,y:13},{x:3,y:12},{x:3,y:11},{x:3,y:10},{x:3,y:9},{x:3,y:8},{x:3,y:7},{x:3,y:6},{x:3,y:5},{x:3,y:4},{x:3,y:3},{x:3,y:2},{x:3,y:1},
+      {x:4,y:1},{x:5,y:1},{x:6,y:1},
+      {x:6,y:2},{x:6,y:3},{x:6,y:4},{x:6,y:5},{x:6,y:6},{x:6,y:7},{x:6,y:8},{x:6,y:9},{x:6,y:10},{x:6,y:11},{x:6,y:12},{x:6,y:13},{x:6,y:14},
+      {x:7,y:14},{x:8,y:14},{x:9,y:14},
+      {x:9,y:13},{x:9,y:12},{x:9,y:11},{x:9,y:10},{x:9,y:9},{x:9,y:8},{x:9,y:7},{x:9,y:6},{x:9,y:5},{x:9,y:4},{x:9,y:3},{x:9,y:2},{x:9,y:1},
+      {x:10,y:1},{x:11,y:1},{x:12,y:1},
+      {x:12,y:2},{x:12,y:3},{x:12,y:4},{x:12,y:5},{x:12,y:6},{x:12,y:7},{x:12,y:8},{x:12,y:9},{x:12,y:10},{x:12,y:11},{x:12,y:12},{x:12,y:13},{x:12,y:14},
+      {x:13,y:14},{x:14,y:14},{x:15,y:14},
+      {x:15,y:15}
+    ]
+  }
 ];
-const PATH = [
-  {x:0,y:1},{x:1,y:1},{x:2,y:1},{x:3,y:1},{x:4,y:1},{x:4,y:2},{x:4,y:3},{x:4,y:4},
-  {x:5,y:4},{x:6,y:4},{x:7,y:4},{x:8,y:4},{x:9,y:4},{x:10,y:4},{x:10,y:5},{x:10,y:6},
-  {x:10,y:7},{x:9,y:7},{x:8,y:7},{x:7,y:7},{x:6,y:7},{x:5,y:7},{x:4,y:7},{x:3,y:7},{x:2,y:7},
-  {x:2,y:8},{x:2,y:9},{x:2,y:10},{x:3,y:10},{x:4,y:10},{x:5,y:10},{x:6,y:10},{x:7,y:10},
-  {x:7,y:11},{x:7,y:12},{x:7,y:13},{x:8,y:13},{x:9,y:13},{x:10,y:13},{x:11,y:13},{x:12,y:13},
-  {x:13,y:13},{x:14,y:13},{x:15,y:13},{x:15,y:14},{x:15,y:15}
-].map(p=>({x:p.x*TILE+TILE/2,y:p.y*TILE+TILE/2}));
+
+let MAP = MAPS[0].map;
+let PATH = MAPS[0].path.map(p=>({x:p.x*TILE+TILE/2,y:p.y*TILE+TILE/2}));
+let currentMap = 0;
+
+function currentMapIndex(){
+  return Math.min(Math.floor(highestWave/200), MAPS.length-1);
+}
+function loadMap(idx){
+  currentMap = idx;
+  MAP = MAPS[idx].map;
+  PATH = MAPS[idx].path.map(p=>({x:p.x*TILE+TILE/2,y:p.y*TILE+TILE/2}));
+  grid = MAP.map(r=>[...r]);
+}
 
 const DIFFS = {
   easy:      {label:'Easy',color:'#4caf50',lives:30,gold:150,hpMul:0.75,spdMul:0.85,goldMul:1.25},
@@ -413,7 +525,7 @@ function saveEndless(){
   const data={
     gold,waveNum,waveActive,gsoulsCollected,gsoulsPending,
     towers:towers.map(t=>({x:t.x,y:t.y,type:t.type,upgrades:[...t.upgrades],totalSpent:t.totalSpent,targeting:t.targeting})),
-    grid:grid.map(r=>[...r]),shown50Splash,
+    grid:grid.map(r=>[...r]),shown50Splash,currentMap,
     endlessFarming,endlessTargetWave,highestWave,resetHighWave,gsoulDroppedWaves:[...gsoulDroppedWaves],gsoulUpgrades
   };
   localStorage.setItem(SAVE_KEY,JSON.stringify(data));
@@ -427,6 +539,7 @@ function loadEndless(){
   document.getElementById('menu-screen').style.display='none';
   document.getElementById('game-container').style.display='flex';
   const d=JSON.parse(raw);
+  currentMap=d.currentMap||0; MAP=MAPS[currentMap].map; PATH=MAPS[currentMap].path.map(p=>({x:p.x*TILE+TILE/2,y:p.y*TILE+TILE/2}));
   grid=d.grid; gold=d.gold; waveNum=d.waveActive?d.waveNum-1:d.waveNum; lives=1; waveActive=false; gameRunning=true;
   hasWon=false; shown50Splash=d.shown50Splash||false; autoStart=false;
   gsoulsCollected=d.gsoulsCollected||0; gsoulsPending=d.gsoulsPending||0;
@@ -459,7 +572,7 @@ function checkSaveOnMenu(){
     try{
       const d=JSON.parse(localStorage.getItem(SAVE_KEY));
       card.style.display='';
-      info.innerHTML=`Wave: <span>${d.waveNum}</span><br>Gold: <span>${d.gold}</span><br>Gsouls: <span>${d.gsoulsCollected||0}</span><br>Towers: <span>${d.towers.length}</span>`;
+      info.innerHTML=`Wave: <span>${d.waveNum}</span><br>Gold: <span>${d.gold}</span><br>Gsouls: <span>${d.gsoulsCollected||0}</span><br>Towers: <span>${d.towers.length}</span><br>Map: <span>${(d.currentMap||0)+1}</span>`;
     }catch{card.style.display='none';}
   } else { card.style.display='none'; }
 }
@@ -482,7 +595,7 @@ function backToMenu(){
   checkSaveOnMenu();
 }
 function initGame(){
-  grid=MAP.map(r=>[...r]);
+  loadMap(isEndless?currentMapIndex():0);
   gold=diff.gold; lives=diff.lives; waveNum=0; waveActive=false; gameRunning=true;
   hasWon=false; autoStart=false; shown50Splash=false;
   gsoulsCollected=0; gsoulsPending=0; highestWave=0; resetHighWave=0;
@@ -585,7 +698,7 @@ function doClaimGsouls(){
   // Full reset: lose towers, gold, back to wave 1 — keep gsouls
   waveNum=0; waveActive=false; enemies=[]; projectiles=[]; particles=[]; lightningBolts=[]; goldTexts=[];
   gold=diff.gold; lives=1;
-  towers=[]; grid=MAP.map(r=>[...r]);
+  towers=[]; loadMap(currentMapIndex());
   endlessFarming=false; endlessTargetWave=0; resetHighWave=0; gsoulDroppedWaves=new Set(); queuedAdvance=false;
   selectedPlacedTower=null;
   document.getElementById('upgrade-panel').style.display='none';
@@ -852,7 +965,9 @@ function updateUI(){
   document.getElementById('lives').textContent=lives;
   document.getElementById('wave').textContent=waveNum;
   document.getElementById('tower-count').textContent=`${towers.length} / ${towerCap()}`;
-  if(isEndless){const hws=document.getElementById('highest-wave-stat');hws.style.display='block';document.getElementById('highest-wave-display').textContent=highestWave;}
+  if(isEndless){const hws=document.getElementById('highest-wave-stat');hws.style.display='block';document.getElementById('highest-wave-display').textContent=highestWave;
+    const ms=document.getElementById('map-stat');ms.style.display='block';document.getElementById('map-display').textContent=currentMap+1;document.getElementById('map-total').textContent=MAPS.length;
+    const nextUnlock=currentMap<MAPS.length-1?(currentMap+1)*200:null;if(nextUnlock)ms.title=`Next map unlocks at wave ${nextUnlock}`;else ms.title='All maps unlocked!';}
   const ni=Math.min(Math.floor(gold*INTEREST_RATE),MAX_INTEREST);
   document.getElementById('ip-next').textContent=`+${ni}g`;
   const nw=waveNum+1;
@@ -896,7 +1011,9 @@ function advanceWave(){
 function startWave(){
   if(waveActive)return;
   if(!endlessFarming) waveNum++;
+  const prevMapIdx=currentMapIndex();
   if(waveNum>highestWave) highestWave=waveNum;
+  if(currentMapIndex()>prevMapIdx&&currentMapIndex()<MAPS.length){document.getElementById('interest-msg').textContent=`New map ${currentMapIndex()+1} unlocked! Available on next reset.`;setTimeout(()=>{if(document.getElementById('interest-msg').textContent.includes('New map'))document.getElementById('interest-msg').textContent='';},5000);}
   if(waveNum>resetHighWave) resetHighWave=waveNum;
   waveActive=true; lives=isEndless?1:lives;
   document.getElementById('start-btn').disabled=true;
