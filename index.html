@@ -752,13 +752,13 @@ function getMineStats(t){
 }
 function getAuraStats(t){
   const dmgBoost=1+(t.upgrades[0]-1)*0.10; // +10% damage per level
-  const rangeBoost=1+(t.upgrades[1]-1)*0.08; // +8% range per level
+  const rangeBoost=1+(t.upgrades[1]-1)*0.03; // +3% range per level
   const range=Math.round(TDEFS[6].range+(t.upgrades[1]-1)*10);
   return{dmgBoost,rangeBoost,range};
 }
 function getAuraBoost(tower){
   let dmgMul=1,rangeMul=1;
-  towers.forEach(a=>{if(a.type!==6)return;const as=getAuraStats(a);if(dist(a,tower)<as.range){dmgMul*=as.dmgBoost;rangeMul*=as.rangeBoost;}});
+  towers.forEach(a=>{if(a.type!==6||a===tower)return;const as=getAuraStats(a);if(dist(a,tower)<as.range){dmgMul*=as.dmgBoost;rangeMul*=as.rangeBoost;}});
   return{dmgMul,rangeMul};
 }
 function getSellValue(t){return Math.round(t.totalSpent*0.6);}
