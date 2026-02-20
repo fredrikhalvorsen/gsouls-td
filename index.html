@@ -390,10 +390,11 @@ function upgCost(lvl,idx,ttype){
   if(idx===0) return Math.round(8+lvl*3); // Damage: linear scaling
   return Math.round(15*Math.pow(1.55,lvl-1));
 }
-function maxUpg(idx){
+function maxUpg(idx,ttype){
   if(!isEndless) return 5;
-  // In endless: special (idx 2) and range (idx 3) capped at 5, rest unlimited
-  if(idx===2||idx===3) return 5;
+  // In endless: special and range capped, rest unlimited
+  if(idx===2) return ttype===3?10:5; // lightning chain count cap 10, others 5
+  if(idx===3) return 5;
   return Infinity;
 }
 
@@ -690,7 +691,7 @@ function bulkCount(lvl,step){
   return nextTarget-lvl;
 }
 function getUpBtnInfo(lvl,idx,ttype){
-  const mx=maxUpg(idx),atMax=lvl>=mx;
+  const mx=maxUpg(idx,ttype),atMax=lvl>=mx;
   const lvlBar=isEndless?(atMax?`Lv.${lvl} MAX`:`Lv.${lvl}`):(atMax?'\u2588'.repeat(5):'\u2588'.repeat(lvl)+'\u2591'.repeat(5-lvl));
   if(atMax) return {atMax:true,lvlBar,label:'MAX',canAfford:false};
   const remaining=mx<Infinity?mx-lvl:Infinity;
@@ -754,7 +755,7 @@ function refreshUpPanel(){
 function doUpgrade(idx){
   const t=selectedPlacedTower; if(!t)return;
   if(t.type===5&&idx>=2)return;
-  const mx=maxUpg(idx); if(t.upgrades[idx]>=mx)return;
+  const mx=maxUpg(idx,t.type); if(t.upgrades[idx]>=mx)return;
   selectedUpgPath=idx;
   const tt=t.type;
   if(isEndless&&bulkMode!==1){
