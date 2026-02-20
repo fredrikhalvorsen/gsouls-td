@@ -250,7 +250,7 @@
     <div class="tower-btn" onclick="selectTower(3)" id="tb3"><div class="name" style="color:#64ffda">Lightning Tower</div><div class="desc">Chain lightning | <span style="color:#ff0">60g</span></div></div>
     <div class="tower-btn" onclick="selectTower(4)" id="tb4"><div class="name" style="color:#90a4ae">Sniper Tower</div><div class="desc">High dmg, crit | <span style="color:#ff0">55g</span></div></div>
     <div class="tower-btn" onclick="selectTower(5)" id="tb5"><div class="name" style="color:#ffd54f">Gold Mine</div><div class="desc">Passive gold | <span style="color:#ff0">40g</span></div></div>
-    <div class="tower-btn" onclick="selectTower(6)" id="tb6" style="display:none"><div class="name" style="color:#e0e0e0">Aura Tower</div><div class="desc">Boosts nearby towers | <span style="color:#ff0">75g</span></div></div>
+    <div class="tower-btn" onclick="selectTower(6)" id="tb6"><div class="name" style="color:#e0e0e0"><span id="tb6-name">Aura Tower</span></div><div class="desc" id="tb6-desc">Boosts nearby towers | <span style="color:#ff0">75g</span></div></div>
 
     <p class="hint">Click to place | Click tower to upgrade</p>
 
@@ -994,7 +994,10 @@ function updateUI(){
   if(isEndless){const hws=document.getElementById('highest-wave-stat');hws.style.display='block';document.getElementById('highest-wave-display').textContent=highestWave;
     const ms=document.getElementById('map-stat');ms.style.display='block';document.getElementById('map-display').textContent=currentMap+1;document.getElementById('map-total').textContent=MAPS.length;
     const nextUnlock=currentMap<MAPS.length-1?(currentMap+1)*200:null;if(nextUnlock)ms.title=`Next map unlocks at wave ${nextUnlock}`;else ms.title='All maps unlocked!';
-    document.getElementById('tb6').style.display=highestWave>=200?'':'none';}
+    const auraBtn=document.getElementById('tb6'),auraUnlocked=highestWave>=200;
+    auraBtn.style.opacity=auraUnlocked?'1':'0.5';auraBtn.style.pointerEvents=auraUnlocked?'':'none';
+    document.getElementById('tb6-name').textContent=auraUnlocked?'Aura Tower':'\uD83D\uDD12 Aura Tower';
+    document.getElementById('tb6-desc').innerHTML=auraUnlocked?'Boosts nearby towers | <span style="color:#ff0">75g</span>':'Reach wave 200 to unlock';}
   const ni=Math.min(Math.floor(gold*INTEREST_RATE),MAX_INTEREST);
   document.getElementById('ip-next').textContent=`+${ni}g`;
   const nw=waveNum+1;
