@@ -250,7 +250,7 @@
     <div class="tower-btn" onclick="selectTower(3)" id="tb3"><div class="name" style="color:#64ffda">Lightning Tower</div><div class="desc">Chain lightning | <span style="color:#ff0">60g</span></div></div>
     <div class="tower-btn" onclick="selectTower(4)" id="tb4"><div class="name" style="color:#90a4ae">Sniper Tower</div><div class="desc">High dmg, crit | <span style="color:#ff0">55g</span></div></div>
     <div class="tower-btn" onclick="selectTower(5)" id="tb5"><div class="name" style="color:#ffd54f">Gold Mine</div><div class="desc">Passive gold | <span style="color:#ff0">40g</span></div></div>
-    <div class="tower-btn" onclick="selectTower(6)" id="tb6"><div class="name" style="color:#e0e0e0">Aura Tower</div><div class="desc">Boosts nearby towers | <span style="color:#ff0">75g</span></div></div>
+    <div class="tower-btn" onclick="selectTower(6)" id="tb6" style="display:none"><div class="name" style="color:#e0e0e0">Aura Tower</div><div class="desc">Boosts nearby towers | <span style="color:#ff0">75g</span></div></div>
 
     <p class="hint">Click to place | Click tower to upgrade</p>
 
@@ -765,6 +765,7 @@ function getSellValue(t){return Math.round(t.totalSpent*0.6);}
 
 // --- UI ---
 function selectTower(i){
+  if(i===6&&highestWave<200)return;
   selectedTower=i; selectedPlacedTower=null;
   document.getElementById('upgrade-panel').style.display='none';
   document.querySelectorAll('.tower-btn').forEach((b,j)=>b.classList.toggle('selected',j===i));
@@ -992,7 +993,8 @@ function updateUI(){
   document.getElementById('tower-count').textContent=`${towers.length} / ${towerCap()}`;
   if(isEndless){const hws=document.getElementById('highest-wave-stat');hws.style.display='block';document.getElementById('highest-wave-display').textContent=highestWave;
     const ms=document.getElementById('map-stat');ms.style.display='block';document.getElementById('map-display').textContent=currentMap+1;document.getElementById('map-total').textContent=MAPS.length;
-    const nextUnlock=currentMap<MAPS.length-1?(currentMap+1)*200:null;if(nextUnlock)ms.title=`Next map unlocks at wave ${nextUnlock}`;else ms.title='All maps unlocked!';}
+    const nextUnlock=currentMap<MAPS.length-1?(currentMap+1)*200:null;if(nextUnlock)ms.title=`Next map unlocks at wave ${nextUnlock}`;else ms.title='All maps unlocked!';
+    document.getElementById('tb6').style.display=highestWave>=200?'':'none';}
   const ni=Math.min(Math.floor(gold*INTEREST_RATE),MAX_INTEREST);
   document.getElementById('ip-next').textContent=`+${ni}g`;
   const nw=waveNum+1;
