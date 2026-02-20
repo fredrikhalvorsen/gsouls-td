@@ -250,6 +250,7 @@
     <div class="tower-btn" onclick="selectTower(3)" id="tb3"><div class="name" style="color:#64ffda">Lightning Tower</div><div class="desc">Chain lightning | <span style="color:#ff0">60g</span></div></div>
     <div class="tower-btn" onclick="selectTower(4)" id="tb4"><div class="name" style="color:#90a4ae">Sniper Tower</div><div class="desc">High dmg, crit | <span style="color:#ff0">55g</span></div></div>
     <div class="tower-btn" onclick="selectTower(5)" id="tb5"><div class="name" style="color:#ffd54f">Gold Mine</div><div class="desc">Passive gold | <span style="color:#ff0">40g</span></div></div>
+    <div class="tower-btn" onclick="selectTower(6)" id="tb6"><div class="name" style="color:#e0e0e0">Aura Tower</div><div class="desc">Boosts nearby towers | <span style="color:#ff0">75g</span></div></div>
 
     <p class="hint">Click to place | Click tower to upgrade</p>
 
@@ -494,16 +495,19 @@ const TDEFS = [
   {name:'Lightning',color:'#64ffda',cost:60,range:130,damage:15,rate:700,splash:0,slow:0,chains:2,targets:1,specName:'Chain Count'},
   {name:'Sniper',color:'#90a4ae',cost:55,range:190,damage:40,rate:1800,splash:0,slow:0,chains:0,targets:1,specName:'Crit Chance'},
   {name:'Gold Mine',color:'#ffd54f',cost:40,range:0,damage:0,rate:0,splash:0,slow:0,chains:0,targets:0,specName:''},
+  {name:'Aura',color:'#e0e0e0',cost:75,range:120,damage:0,rate:0,splash:0,slow:0,chains:0,targets:0,specName:''},
 ];
 const MINE_BASE_GOLD=3, MINE_BASE_RATE=5000;
 
 function upgCost(lvl,idx,ttype){
   if(idx===0&&ttype===5) return Math.round((15+lvl*8)*Math.pow(1.01,lvl-1)); // Gold Mine "Gold Amt": linear base + mild exponential
+  if(ttype===6) return Math.round(20*Math.pow(1.6,lvl-1)); // Aura tower upgrades
   if(idx===0) return Math.round(8+lvl*3); // Damage: linear scaling
   return Math.round(15*Math.pow(1.55,lvl-1));
 }
 function maxUpg(idx,ttype){
   if(!isEndless) return 5;
+  if(ttype===6) return 10; // Aura tower caps at 10
   // In endless: special and range capped, rest unlimited
   if(idx===2) return ttype===3?10:5; // lightning chain count cap 10, others 5
   if(idx===3) return 5;
@@ -720,14 +724,16 @@ function doHardReset(){
 // --- Tower stats ---
 function getTowerStats(t){
   if(t.type===5) return getMineStats(t);
+  if(t.type===6) return getAuraStats(t);
   const b=TDEFS[t.type];
+  const aura=getAuraBoost(t);
   const dlvl=t.upgrades[0];
   const baseDmg=b.damage*(1+(dlvl-1)*0.35)*(isEndless?gsoulDmgMul():1);
   const bonusLevels=dlvl>=100?Math.floor((dlvl-100)/25):0;
   const milestones=Math.floor(dlvl/1000);
-  const dmg=Math.round(baseDmg*(1+bonusLevels*0.10)*Math.pow(1.25,milestones));
+  const dmg=Math.round(baseDmg*(1+bonusLevels*0.10)*Math.pow(1.25,milestones)*aura.dmgMul);
   const rate=Math.max(50,Math.round(b.rate*Math.pow(0.87,t.upgrades[1]-1)));
-  const range=Math.round(b.range+(t.upgrades[3]-1)*15);
+  const range=Math.round((b.range+(t.upgrades[3]-1)*15)*aura.rangeMul);
   let splash=b.splash,slow=b.slow,chains=b.chains,targets=b.targets;
   const sl=t.upgrades[2];
   let critChance=0;
@@ -744,6 +750,17 @@ function getMineStats(t){
   const r=Math.max(200,Math.round(MINE_BASE_RATE*Math.pow(0.82,t.upgrades[1]-1)));
   return{goldPerTick:g,tickRate:r};
 }
+function getAuraStats(t){
+  const dmgBoost=1+(t.upgrades[0]-1)*0.10; // +10% damage per level
+  const rangeBoost=1+(t.upgrades[1]-1)*0.08; // +8% range per level
+  const range=Math.round(TDEFS[6].range+(t.upgrades[1]-1)*10);
+  return{dmgBoost,rangeBoost,range};
+}
+function getAuraBoost(tower){
+  let dmgMul=1,rangeMul=1;
+  towers.forEach(a=>{if(a.type!==6)return;const as=getAuraStats(a);if(dist(a,tower)<as.range){dmgMul*=as.dmgBoost;rangeMul*=as.rangeBoost;}});
+  return{dmgMul,rangeMul};
+}
 function getSellValue(t){return Math.round(t.totalSpent*0.6);}
 
 // --- UI ---
@@ -752,7 +769,7 @@ function selectTower(i){
   document.getElementById('upgrade-panel').style.display='none';
   document.querySelectorAll('.tower-btn').forEach((b,j)=>b.classList.toggle('selected',j===i));
 }
-function setTargeting(m){if(!selectedPlacedTower||selectedPlacedTower.type===5)return;selectedPlacedTower.targeting=m;updateTargetBtns();}
+function setTargeting(m){if(!selectedPlacedTower||selectedPlacedTower.type===5||selectedPlacedTower.type===6)return;selectedPlacedTower.targeting=m;updateTargetBtns();}
 function updateTargetBtns(){const t=selectedPlacedTower;TARGETING_MODES.forEach(m=>{document.getElementById('tgt-'+m).classList.toggle('active',t&&t.targeting===m);});}
 
 function showUpgradePanel(tower){
@@ -769,7 +786,15 @@ function showUpgradePanel(tower){
   cont.innerHTML='';
 
   let html='';
-  if(tower.type===5){
+  if(tower.type===6){
+    const as=getAuraStats(tower);
+    document.getElementById('up-stats').innerHTML=`Dmg Boost:<span>+${Math.round((as.dmgBoost-1)*100)}%</span> Range Boost:<span>+${Math.round((as.rangeBoost-1)*100)}%</span> Aura Rng:<span>${as.range}</span>`;
+    tRow.style.display='none';
+    [{name:'Dmg Boost',lvl:tower.upgrades[0],icon:'\u2694',idx:0,bg:'#e53935',tt:6},
+     {name:'Rng Boost',lvl:tower.upgrades[1],icon:'\uD83C\uDFAF',idx:1,bg:'#2e7d32',tt:6}].forEach(p=>{
+      html+=makeUpBtn(p);
+    });
+  } else if(tower.type===5){
     const ms=getMineStats(tower);
     document.getElementById('up-stats').innerHTML=`Income: <span>${ms.goldPerTick}g</span> / <span>${(ms.tickRate/1000).toFixed(1)}s</span>${isEndless?' (always)':' (waves)'}`;
     tRow.style.display='none';
@@ -956,7 +981,7 @@ canvas.addEventListener('click',e=>{
   if(towers.length>=towerCap())return;
   const d=TDEFS[selectedTower]; if(gold<d.cost)return;
   gold-=d.cost; grid[row][col]=2;
-  towers.push({x:col*TILE+TILE/2,y:row*TILE+TILE/2,type:selectedTower,upgrades:selectedTower===5?[1,1]:[1,1,1,1],totalSpent:d.cost,lastShot:gameTime,angle:0,targeting:'first',lastTick:gameTime});
+  towers.push({x:col*TILE+TILE/2,y:row*TILE+TILE/2,type:selectedTower,upgrades:(selectedTower===5||selectedTower===6)?[1,1]:[1,1,1,1],totalSpent:d.cost,lastShot:gameTime,angle:0,targeting:'first',lastTick:gameTime});
   updateUI(); if(isEndless)saveEndless();
 });
 
@@ -1108,7 +1133,7 @@ function update(dt,now){
 
   // Shooting
   towers.forEach(t=>{
-    if(t.type===5)return;const st=getTowerStats(t),b=TDEFS[t.type];if(now-t.lastShot<st.rate)return;
+    if(t.type===5||t.type===6)return;const st=getTowerStats(t),b=TDEFS[t.type];if(now-t.lastShot<st.rate)return;
     const tgts=pickTargets(t,st);if(!tgts.length)return;
     t.lastShot=now;const mt=tgts[0].enemy;t.angle=Math.atan2(mt.y-t.y,mt.x-t.x);
     for(const tg of tgts) projectiles.push({x:t.x,y:t.y,tx:tg.enemy.x,ty:tg.enemy.y,target:tg.enemy,speed:t.type===1?4:(t.type===4?9:7),tt:t.type,damage:st.damage,splash:st.splash,slow:b.slow>0?st.slow:0,chains:st.chains,critChance:st.critChance||0,alive:true});
@@ -1193,15 +1218,18 @@ function draw(){
 
   towers.forEach(t=>{
     const b=TDEFS[t.type],isSel=selectedPlacedTower===t;
-    if(isSel&&t.type!==5){const s=getTowerStats(t);ctx.strokeStyle='rgba(0,255,255,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(t.x,t.y,s.range,0,Math.PI*2);ctx.stroke();if(s.splash>0){ctx.strokeStyle='rgba(255,150,0,0.2)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(t.x,t.y,s.splash,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}}
+    if(isSel&&t.type!==5){const s=getTowerStats(t);ctx.strokeStyle=t.type===6?'rgba(224,224,224,0.3)':'rgba(0,255,255,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(t.x,t.y,s.range,0,Math.PI*2);ctx.stroke();if(s.splash>0){ctx.strokeStyle='rgba(255,150,0,0.2)';ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(t.x,t.y,s.splash,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}}
+    // Aura tower: always show subtle range circle
+    if(t.type===6){const as=getAuraStats(t);ctx.strokeStyle='rgba(224,224,224,0.12)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(t.x,t.y,as.range,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     ctx.fillStyle='#263238';ctx.fillRect(t.x-14,t.y-14,28,28);ctx.fillStyle=b.color;ctx.fillRect(t.x-12,t.y-12,24,24);
-    if(t.type===5){ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('$',t.x,t.y+1);ctx.textBaseline='alphabetic';}
+    if(t.type===6){ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('\u2726',t.x,t.y+1);ctx.textBaseline='alphabetic';}
+    else if(t.type===5){ctx.fillStyle='#fff';ctx.font='bold 16px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('$',t.x,t.y+1);ctx.textBaseline='alphabetic';}
     else if(t.type===4){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.angle);ctx.fillStyle='#fff';ctx.fillRect(0,-1.5,16,3);ctx.fillStyle='#ff5252';ctx.beginPath();ctx.arc(14,0,3,0,Math.PI*2);ctx.fill();ctx.restore();ctx.strokeStyle='rgba(255,82,82,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(t.x-8,t.y);ctx.lineTo(t.x+8,t.y);ctx.moveTo(t.x,t.y-8);ctx.lineTo(t.x,t.y+8);ctx.stroke();}
     else if(t.type===3){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.angle);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(10,0,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#64ffda';ctx.beginPath();ctx.arc(10,0,2,0,Math.PI*2);ctx.fill();ctx.restore();}
     else{ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.angle);ctx.fillStyle='#fff';ctx.fillRect(0,-2,16,4);ctx.restore();}
-    if(t.type!==5){ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(t.targeting==='first'?'F':t.targeting==='last'?'L':'S',t.x,t.y-16);}
+    if(t.type!==5&&t.type!==6){ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='8px sans-serif';ctx.textAlign='center';ctx.fillText(t.targeting==='first'?'F':t.targeting==='last'?'L':'S',t.x,t.y-16);}
     // Pips
-    const py=t.y+16,px=t.x-13,cls=t.type===5?['#ffd54f','#42a5f5']:['#e53935','#42a5f5','#ce93d8','#4caf50'],np=t.type===5?2:4;
+    const py=t.y+16,px=t.x-13,cls=t.type===5?['#ffd54f','#42a5f5']:t.type===6?['#e53935','#2e7d32']:['#e53935','#42a5f5','#ce93d8','#4caf50'],np=(t.type===5||t.type===6)?2:4;
     for(let p=0;p<np;p++){const lv=t.upgrades[p];if(lv>1){const pp=px+p*7,show=Math.min(lv-1,4);for(let l=0;l<show;l++){ctx.fillStyle=cls[p];ctx.fillRect(pp+l*1.5,py,1,3);}if(lv>5){ctx.fillStyle=cls[p];ctx.font='7px sans-serif';ctx.textAlign='left';ctx.fillText(lv,pp,py+10);}}}
     if(isSel){ctx.strokeStyle='#0ff';ctx.lineWidth=2;ctx.strokeRect(t.x-15,t.y-15,30,30);}
   });
