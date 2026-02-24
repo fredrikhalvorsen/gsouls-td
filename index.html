@@ -1102,7 +1102,7 @@ function startWave(){
 
 function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 // Sniper (type 4) deals 40% less to non-boss; all others deal 40% less to bosses
-function effDmg(dmg,towerType,enemy){if(towerType===4&&!enemy.isBoss)return Math.round(dmg*0.25);if(towerType!==4&&enemy.isBoss)return Math.round(dmg*0.6);return dmg;}
+function effDmg(dmg,towerType,enemy){if(towerType===4&&!enemy.isBoss)return Math.round(dmg*0.01);if(towerType===3&&enemy.isBoss)return Math.round(dmg*0.01);if(towerType!==4&&towerType!==3&&enemy.isBoss)return Math.round(dmg*0.6);return dmg;}
 function spawnParticles(x,y,c,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*3;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,color:c,life:300+Math.random()*300,radius:2+Math.random()*2});}}
 function addGoldText(x,y,t){goldTexts.push({x,y,text:t,life:1200});}
 function addLightningBolt(x1,y1,x2,y2){const s=[];for(let i=0;i<=6;i++){const t=i/6;s.push({x:x1+(x2-x1)*t+(i>0&&i<6?(Math.random()-0.5)*20:0),y:y1+(y2-y1)*t+(i>0&&i<6?(Math.random()-0.5)*20:0)});}lightningBolts.push({segs:s,life:200});}
